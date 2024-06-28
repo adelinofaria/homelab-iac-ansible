@@ -1,3 +1,0 @@
--i https://pypi.org/simple
-proxmoxer >= 2.0.1
-requests >= 2.32.3

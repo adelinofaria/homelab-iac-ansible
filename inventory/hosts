@@ -1,0 +1,6 @@
+# file: inventory/hosts
+[docker]
+python-alpine
+
+[proxmox]
+pve01

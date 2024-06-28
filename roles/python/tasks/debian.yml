@@ -1,0 +1,6 @@
+---
+# roles/python/tasks/debian.yml
+- name: Ensure python3 is present for debian
+  ansible.builtin.apt:
+    name: python3
+    state: present

@@ -1,0 +1,10 @@
+---
+# roles/proxmox/tasks/debian.yml
+- name: Ensure python3-proxmoxer is present for debian
+  ansible.builtin.apt:
+    name: python3-proxmoxer
+    state: present
+- name: Ensure python3-requests is present for debian
+  ansible.builtin.apt:
+    name: python3-requests
+    state: present

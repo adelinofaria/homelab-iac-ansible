@@ -1,0 +1,5 @@
+---
+# file: roles/pip/tasks/main.yml
+- name: Import debian version of install pip
+  ansible.builtin.import_tasks: debian.yml
+  when: ansible_facts['os_family']|lower == 'debian'

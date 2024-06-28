@@ -1,0 +1,23 @@
+---
+# file: proxmox.yml
+- name: Running proxmox.yml playbook
+  hosts: proxmox
+  # tasks:
+  #   - name: Test ping endpoint
+  #     ansible.builtin.ping:
+  #       data: test
+  #   - name: Create new container with minimal options
+  #     community.general.proxmox:
+  #       node: pve01 # the physical server on which the container will run
+  #       api_host: pve01 # Specify the target host of the Proxmox VE cluster.
+  #       api_user: root@pam
+  #       api_password: enter
+  #       vmid: 100 # Specifies the instance ID. If not set the next available ID will be fetched from ProxmoxAPI.
+  #       hostname: plex01 # the instance hostname
+  #       password: enter # the instance root password
+  #       ostemplate: 'local:vztmpl/ubuntu-22.04-x86_64.tar.gz'
+  # roles:
+  #   - role: roles/proxmoxctl
+  #   - tags: proxmoxctl
+  roles:
+    - proxmox

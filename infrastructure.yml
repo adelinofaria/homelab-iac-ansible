@@ -1,0 +1,6 @@
+---
+# file: infrastructure.yml
+- name: Running infrastructure.yml playbook
+  hosts: all
+- name: Import proxmox.yml playbook
+  ansible.builtin.import_playbook: proxmox.yml

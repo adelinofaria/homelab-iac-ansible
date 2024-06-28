@@ -1,0 +1,5 @@
+---
+# file: roles/python/tasks/main.yml
+- name: Import debian version of install python3
+  ansible.builtin.import_tasks: debian.yml
+  when: ansible_facts['os_family']|lower == 'debian'
