@@ -2,9 +2,9 @@ FROM alpine:latest
 
 RUN apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
 RUN apk add --update --no-cache py3-pip py3-setuptools py3-lxc
-RUN apk add --update --no-cache ansible sshpass
+RUN apk add --update --no-cache ansible curl git openssh sshpass
 
-RUN apk add curl git
+ENV ANSIBLE_HOST_KEY_CHECKING false
 
 WORKDIR /work
 
