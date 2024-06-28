@@ -1,0 +1,2 @@
+ansible_host: 192.168.1.2
+ansible_password: "{{ vault_pve01_root_password }}"

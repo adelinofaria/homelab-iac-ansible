@@ -1,0 +1,8 @@
+# https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html
+
+[proxmox]
+pve01
+
+[docker]
+python-alpine
+  

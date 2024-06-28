@@ -1,0 +1,6 @@
+---
+collections:
+  # Install a collection from Ansible Galaxy.
+  - name: community.general
+    version: ">=9.1.0"
+    source: https://galaxy.ansible.com

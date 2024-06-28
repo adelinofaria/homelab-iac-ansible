@@ -1,0 +1,10 @@
+---
+- name: Test
+  hosts: proxmox
+  tasks:
+    - name: Test ping endpoint
+      ansible.builtin.ping:
+        data: test
+    - name: Print all available facts
+      ansible.builtin.debug:
+        var: ansible_facts
