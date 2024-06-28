@@ -10,7 +10,7 @@
   community.general.proxmox_template:
     node: pve01
     api_user: root@pam
-    api_password: enter
+    api_password: "{{ ansible_password }}"
     api_host: pve01
     storage: local
     content_type: vztmpl
@@ -21,7 +21,7 @@
     vmid: 100 # Specifies the instance ID. If not set the next available ID will be fetched from ProxmoxAPI.
     node: pve01 # the physical server on which the container will run
     api_user: root@pam
-    api_password: enter
+    api_password: "{{ ansible_password }}"
     api_host: pve01 # Specify the target host of the Proxmox VE cluster.
     password: enter # the instance root password
     storage: local-lvm # Hidden required field
