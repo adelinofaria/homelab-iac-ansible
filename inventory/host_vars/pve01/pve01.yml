@@ -1,5 +1,6 @@
 ---
 # file: inventory/host_vars/pve01.yml
 ansible_host: 192.168.1.2
+ansible_user: root
 ansible_password: "{{ vault_pve01_root_password }}"
 ansible_python_interpreter: /usr/bin/python3

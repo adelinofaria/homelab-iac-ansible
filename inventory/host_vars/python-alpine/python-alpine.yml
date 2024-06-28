@@ -1,3 +1,0 @@
----
-# file: inventory/host_vars/python-alpine.yml
-ansible_python_interpreter: /usr/local/bin/python
