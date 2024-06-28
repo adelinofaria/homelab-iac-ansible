@@ -4,3 +4,5 @@
   hosts: all
 - name: Import proxmox.yml playbook
   ansible.builtin.import_playbook: proxmox.yml
+- name: Import lxc.yml playbook
+  ansible.builtin.import_playbook: lxc.yml

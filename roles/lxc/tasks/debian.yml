@@ -1,0 +1,6 @@
+---
+# roles/lxc/tasks/debian.yml
+- name: Ensure python3-lxc is present for debian
+  ansible.builtin.apt:
+    name: python3-lxc
+    state: present

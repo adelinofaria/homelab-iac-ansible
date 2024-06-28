@@ -1,0 +1,10 @@
+---
+# file: lxc.yml
+- name: Running lxc.yml playbook
+  hosts: lxc
+  tasks:
+    - name: Test ping endpoint
+      ansible.builtin.ping:
+        data: test
+  roles:
+    - lxc

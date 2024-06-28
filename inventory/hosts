@@ -1,6 +1,10 @@
 # file: inventory/hosts
 [docker]
+ansible
 python-alpine
 
 [proxmox]
 pve01
+
+[lxc]
+pihole01

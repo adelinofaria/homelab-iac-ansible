@@ -1,0 +1,3 @@
+---
+# file: inventory/host_vars/ansible.yml
+ansible_python_interpreter: /usr/local/bin/python
