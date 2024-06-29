@@ -6,6 +6,12 @@ RUN apk add --update --no-cache ansible curl git openssh sshpass
 
 ENV ANSIBLE_HOST_KEY_CHECKING false
 
+RUN mkdir -p /root/.ssh && chmod 0700 /root/.ssh
+
+COPY ssh-keys/homelab /root/.ssh/id_rsa
+
+RUN chmod 600 /root/.ssh/id_rsa
+
 WORKDIR /work
 
 RUN git clone https://github.com/adelinofaria/homelab-iac-ansible.git

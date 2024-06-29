@@ -4,6 +4,7 @@ ansible
 
 [lxc]
 pihole01
+unbound01
 
 [proxmox]
 pve01
@@ -12,5 +13,6 @@ pve01
 ansible
 
 [debian]
-pihole01
 pve01
+pihole01
+unbound01
