@@ -1,7 +1,7 @@
 ---
-# file: proxmox.yml
-- name: Running proxmox.yml playbook
-  hosts: proxmox
+# file: pve01.yml
+- name: Running pve01.yml playbook
+  hosts: pve01
   roles:
     - proxmox
   tasks:

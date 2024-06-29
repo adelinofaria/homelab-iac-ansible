@@ -6,7 +6,7 @@ ansible
 pihole01
 unbound01
 
-[proxmox]
+[pve]
 pve01
 
 [alipne]

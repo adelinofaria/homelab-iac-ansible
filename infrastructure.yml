@@ -2,8 +2,8 @@
 # file: infrastructure.yml
 - name: Running infrastructure.yml playbook
   hosts: all
-- name: Import proxmox.yml playbook
-  ansible.builtin.import_playbook: proxmox.yml
+- name: Import pve01.yml playbook
+  ansible.builtin.import_playbook: pve01.yml
 - name: Import lxc.yml playbook
   ansible.builtin.import_playbook: lxc.yml
 - name: Import pihole01.yml playbook
