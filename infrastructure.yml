@@ -8,3 +8,5 @@
   ansible.builtin.import_playbook: lxc.yml
 - name: Import pihole01.yml playbook
   ansible.builtin.import_playbook: pihole01.yml
+- name: Import unbound01.yml playbook
+  ansible.builtin.import_playbook: unbound01.yml

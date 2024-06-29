@@ -1,3 +1,11 @@
 ---
 # file: inventory/host_vars/pihole01.yml
 ansible_host: 192.168.1.2
+vmid: 100
+cores: 1
+memory: 256
+storage: local-lvm
+hwaddr: 02:00:00:00:00:02
+gw: 192.168.1.1
+ip: 192.168.1.2/24
+description: Pi-hole LXC - All DNS requests should be sent here
