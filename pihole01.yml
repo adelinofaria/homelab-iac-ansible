@@ -9,16 +9,18 @@
       failed_when: pihole_installed.rc not in [0, 1]
       register: pihole_installed
 
-    - name: Update ad upgrade apt packages
+    - name: Update and upgrade apt packages
       ansible.builtin.apt:
         upgrade: true
         update_cache: true
         cache_valid_time: 3600 # One hour
+      when: pihole_installed.rc not in [0]
 
     - name: Ensure curl is present
       ansible.builtin.apt:
         name: curl
         state: present
+      when: pihole_installed.rc not in [0]
 
     - name: Create /etc/pihole if it does not exist
       ansible.builtin.file:

@@ -1,6 +1,5 @@
 ---
 # file: inventory/host_vars/pve01.yml
 ansible_host: 192.168.1.8
-ansible_user: root
-ansible_password: "{{ vault_pve01_root_password }}"
-ansible_ssh_private_key_file: ../../../ssh-keys/homelab
+api_user: root@pam
+api_password: "{{ vault_api_password }}"
