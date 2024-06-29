@@ -51,3 +51,18 @@
         owner: root
         group: root
         mode: '0644'
+      notify: Restart pihole
+
+    - name: Copy custom.list with owner and permissions
+      ansible.builtin.copy:
+        src: files/pihole01/custom.list
+        dest: /etc/pihole/custom.list
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart pihole
+
+  handlers:
+    - name: Restart pihole
+      ansible.builtin.command: pihole restartdns
+      changed_when: false
