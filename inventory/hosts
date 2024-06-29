@@ -2,8 +2,15 @@
 [docker]
 ansible
 
+[lxc]
+pihole01
+
 [proxmox]
 pve01
 
-[lxc]
+[alipne]
+ansible
+
+[debian]
 pihole01
+pve01

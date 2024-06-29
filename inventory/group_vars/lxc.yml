@@ -1,3 +1,2 @@
 ---
 # file: inventory/group_vars/lxc.yml
-ansible_connection: lxc

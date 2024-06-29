@@ -6,3 +6,5 @@
   ansible.builtin.import_playbook: proxmox.yml
 - name: Import lxc.yml playbook
   ansible.builtin.import_playbook: lxc.yml
+- name: Import pihole01.yml playbook
+  ansible.builtin.import_playbook: pihole01.yml

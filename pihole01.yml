@@ -1,0 +1,43 @@
+---
+# file: pihole01.yml
+- name: Running pihole01.yml playbook
+  hosts: pihole01
+  tasks:
+    - name: Check pihole installation
+      ansible.builtin.command: which pihole
+      changed_when: false
+      failed_when: pihole_installed.rc not in [0, 1]
+      register: pihole_installed
+
+    - name: Update ad upgrade apt packages
+      ansible.builtin.apt:
+        upgrade: true
+        update_cache: true
+        cache_valid_time: 3600 # One hour
+
+    - name: Ensure curl is present
+      ansible.builtin.apt:
+        name: curl
+        state: present
+
+    - name: Create /etc/pihole if it does not exist
+      ansible.builtin.file:
+        path: /etc/pihole
+        state: directory
+        mode: '0755'
+      when: pihole_installed.rc not in [0]
+
+    - name: Copy setupVars.conf with owner and permissions
+      ansible.builtin.copy:
+        src: files/setupVars.conf
+        dest: /etc/pihole/setupVars.conf
+        owner: root
+        group: root
+        mode: '0644'
+      when: pihole_installed.rc not in [0]
+
+    - name: Run script if pi-hole not installed
+      ansible.builtin.shell: curl -L https://install.pi-hole.net | bash /dev/stdin --unattended
+      when: pihole_installed.rc not in [0]
+      tags:
+        - skip_ansible_lint

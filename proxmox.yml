@@ -4,3 +4,98 @@
   hosts: proxmox
   roles:
     - proxmox
+  tasks:
+    - name: Make sure base system container template is present
+      community.general.proxmox_template:
+        node: pve01
+        api_user: root@pam
+        api_password: "{{ ansible_password }}"
+        api_host: pve01
+        storage: local
+        content_type: vztmpl
+        template: debian-12-standard_12.2-1_amd64.tar.zst
+        state: present
+
+    # - name: Stop container with force
+    #   community.general.proxmox:
+    #     vmid: 100
+    #     api_user: root@pam
+    #     api_password: "{{ ansible_password }}"
+    #     api_host: pve01
+    #     force: true
+    #     state: stopped
+
+    # - name: Remove container
+    #   community.general.proxmox:
+    #     vmid: 100
+    #     api_user: root@pam
+    #     api_password: "{{ ansible_password }}"
+    #     api_host: pve01
+    #     state: absent
+
+    - name: Pi-hole LXC
+      community.general.proxmox:
+        vmid: 100 # Specifies the instance ID. If not set the next available ID will be fetched from ProxmoxAPI.
+        node: pve01 # the physical server on which the container will run
+        api_user: root@pam
+        api_password: "{{ ansible_password }}"
+        api_host: pve01 # Specify the target host of the Proxmox VE cluster.
+        # password: "{{ ansible_password }}" # the instance root password
+        storage: local-lvm # Hidden required field
+        pubkey: "{{ lookup('ansible.builtin.file', '../../../ssh-keys/homelab.pub') }}"
+        hostname: pihole01 # the instance hostname
+        ostemplate: 'local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst'
+        cores: 1
+        memory: 512
+        netif: '{"net0":"name=eth0,gw=192.168.1.1,ip=192.168.1.2/24,ip6=dhcp,bridge=vmbr0"}'
+        onboot: true
+        timezone: host
+        description: Pi-hole LXC - All DNS requests should be sent here
+        features:
+          - nesting=1
+
+    - name: Update container configuration
+      community.general.proxmox:
+        vmid: 100
+        node: pve01
+        api_user: root@pam
+        api_password: "{{ ansible_password }}"
+        api_host: pve01
+        pubkey: "{{ lookup('ansible.builtin.file', '../../../ssh-keys/homelab.pub') }}"
+        hostname: pihole01
+        netif: '{"net0":"name=eth0,gw=192.168.1.1,ip=192.168.1.2/24,ip6=dhcp,bridge=vmbr0"}'
+        # netif: '{"net0":"name=eth0,hwaddr=bc:24:11:6b:ce:54,gw=192.168.1.1,ip=192.168.1.2/24,ip6=dhcp,bridge=vmbr0"}'
+        update: true
+
+    - name: Start container
+      community.general.proxmox:
+        vmid: 100
+        api_user: root@pam
+        api_password: "{{ ansible_password }}"
+        api_host: pve01
+        state: started
+
+    # - name: PlexMediaServer LXC
+    #   community.general.proxmox:
+    #     vmid: 200
+    #     node: pve01
+    #     api_user: root@pam
+    #     api_password: "{{ ansible_password }}"
+    #     api_host: pve01 # Specify the target host of the Proxmox VE cluster.
+    #     password: "{{ ansible_password }}" # the instance root password
+    #     storage: local-lvm # Hidden required field
+    #     hostname: plex01.local # the instance hostname
+    #     ostemplate: 'local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst'
+    #     mounts: '{"mp0":"local:8,mp=/mnt/test/"}'
+    #     timezone: host
+
+    # - name: Convert container to template
+    #   community.general.proxmox:
+    #     vmid: 100
+    #     api_user: root@pam
+    #     api_password: 1q2w3e
+    #     api_host: node1
+    #     state: template
+
+# expected mac address of pihole01 BC:24:11:6B:CE:54
+# ran 'systemctl mask systemd-logind' to fix login lag

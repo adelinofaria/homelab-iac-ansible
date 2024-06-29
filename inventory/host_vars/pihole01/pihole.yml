@@ -1,5 +1,5 @@
 ---
 # file: inventory/host_vars/pihole01.yml
-physical_host: pve01
-ansible_host: pihole01
-ansible_python_interpreter: /usr/bin/python3
+ansible_host: 192.168.1.2
+ansible_user: root
+ansible_password: "{{ vault_pihole01_root_password }}"

@@ -1,5 +1,2 @@
 ---
 # file: roles/lxc/tasks/main.yml
-- name: Import debian version of install python3-lxc
-  ansible.builtin.import_tasks: debian.yml
-  when: ansible_facts['os_family']|lower == 'debian'

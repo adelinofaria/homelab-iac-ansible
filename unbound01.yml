@@ -1,0 +1,15 @@
+---
+# file: unbound01.yml
+- name: Running unbound01.yml playbook
+  hosts: unbound01
+  tasks:
+    - name: Update ad upgrade apt packages
+      ansible.builtin.apt:
+        upgrade: true
+        update_cache: true
+        cache_valid_time: 3600 # One hour
+
+    - name: Ensure unbound is present
+      ansible.builtin.apt:
+        name: unbound
+        state: present
