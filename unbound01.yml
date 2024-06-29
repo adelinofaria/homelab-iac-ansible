@@ -8,11 +8,12 @@
         name: unbound
         state: present
 
-    - name: Download foo.conf
+    - name: Download root.hints
       ansible.builtin.get_url:
         url: https://www.internic.net/domain/named.root
         dest: /var/lib/unbound/root.hints
         mode: '0644'
+      notify: Restart unbound
 
     - name: Copy unbound01.conf with owner and permissions
       ansible.builtin.copy:
@@ -21,6 +22,7 @@
         owner: root
         group: root
         mode: '0644'
+      notify: Restart unbound
 
     - name: Run CRON job to update root.hints every 3 months on the first day at 06:30.
       ansible.builtin.cron:
@@ -31,10 +33,8 @@
         minute: "00"
         job: "wget https://www.internic.net/domain/named.root -qO- | tee /var/lib/unbound/root.hints"
 
-    - name: Copy 99-edns.conf with owner and permissions
-      ansible.builtin.copy:
-        src: files/pihole01/99-edns.conf
-        dest: /etc/dnsmasq.d/99-edns.conf
-        owner: root
-        group: root
-        mode: '0644'
+  handlers:
+    - name: Restart unbound
+      ansible.builtin.systemd_service:
+        name: unbound
+        state: restarted
