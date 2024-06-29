@@ -43,3 +43,11 @@
       when: pihole_installed.rc not in [0]
       tags:
         - skip_ansible_lint
+
+    - name: Copy 99-edns.conf with owner and permissions
+      ansible.builtin.copy:
+        src: files/pihole01/99-edns.conf
+        dest: /etc/dnsmasq.d/99-edns.conf
+        owner: root
+        group: root
+        mode: '0644'

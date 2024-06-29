@@ -3,13 +3,38 @@
 - name: Running unbound01.yml playbook
   hosts: unbound01
   tasks:
-    - name: Update ad upgrade apt packages
-      ansible.builtin.apt:
-        upgrade: true
-        update_cache: true
-        cache_valid_time: 3600 # One hour
-
     - name: Ensure unbound is present
       ansible.builtin.apt:
         name: unbound
         state: present
+
+    - name: Download foo.conf
+      ansible.builtin.get_url:
+        url: https://www.internic.net/domain/named.root
+        dest: /var/lib/unbound/root.hints
+        mode: '0644'
+
+    - name: Copy unbound01.conf with owner and permissions
+      ansible.builtin.copy:
+        src: files/unbound01/unbound01.conf
+        dest: /etc/unbound/unbound.conf.d/unbound01.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Run CRON job to update root.hints every 3 months on the first day at 06:30.
+      ansible.builtin.cron:
+        name: "unbound update root.hints"
+        month: "*/3"
+        day: "01"
+        hour: "06"
+        minute: "00"
+        job: "wget https://www.internic.net/domain/named.root -qO- | tee /var/lib/unbound/root.hints"
+
+    - name: Copy 99-edns.conf with owner and permissions
+      ansible.builtin.copy:
+        src: files/pihole01/99-edns.conf
+        dest: /etc/dnsmasq.d/99-edns.conf
+        owner: root
+        group: root
+        mode: '0644'
