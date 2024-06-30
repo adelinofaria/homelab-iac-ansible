@@ -17,7 +17,7 @@
 
     - name: Copy unbound01.conf with owner and permissions
       ansible.builtin.copy:
-        src: files/unbound01/unbound01.conf
+        src: files/unbound/unbound01.conf
         dest: /etc/unbound/unbound.conf.d/unbound01.conf
         owner: root
         group: root

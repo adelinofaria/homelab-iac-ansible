@@ -1,3 +1,2 @@
 ---
 # file: inventory/group_vars/alpine.yml
-ansible_python_interpreter: /usr/bin/python

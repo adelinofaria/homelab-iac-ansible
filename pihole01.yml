@@ -31,7 +31,7 @@
 
     - name: Copy setupVars.conf with owner and permissions
       ansible.builtin.copy:
-        src: files/pihole01/setupVars.conf
+        src: files/pihole/setupVars.conf
         dest: /etc/pihole/setupVars.conf
         owner: root
         group: root
@@ -46,7 +46,7 @@
 
     - name: Copy 99-edns.conf with owner and permissions
       ansible.builtin.copy:
-        src: files/pihole01/99-edns.conf
+        src: files/pihole/99-edns.conf
         dest: /etc/dnsmasq.d/99-edns.conf
         owner: root
         group: root
@@ -55,7 +55,7 @@
 
     - name: Copy custom.list with owner and permissions
       ansible.builtin.copy:
-        src: files/pihole01/custom.list
+        src: files/pihole/custom.list
         dest: /etc/pihole/custom.list
         owner: root
         group: root

@@ -1,6 +1,6 @@
 ---
-# file: infrastructure.yml
-- name: Running infrastructure.yml playbook
+# file: main.yml
+- name: Running main.yml playbook
   hosts: all
 - name: Import pve01.yml playbook
   ansible.builtin.import_playbook: pve01.yml

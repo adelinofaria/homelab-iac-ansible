@@ -5,6 +5,7 @@ ansible
 [lxc]
 pihole01
 unbound01
+#plex01
 
 [pve]
 pve01
@@ -16,3 +17,4 @@ ansible
 pve01
 pihole01
 unbound01
+#plex01

@@ -1,0 +1,79 @@
+---
+# file: csv_export.yml
+- name: Generate an HTML report from Jinja2 template
+  hosts: all
+  gather_facts: true
+
+  vars:
+
+    # email settings
+    email_subject: System status Report
+    email_host: stackoverflw.smtp.com
+    email_from: noreply@stackoverflw.com
+    email_to: AdMin_Stack@stackoverflw.com
+
+    # random settings
+    csv_path: /tmp
+    csv_filename: report.csv
+
+  tasks:
+
+    # - name: Gather last Postfix Status
+    #   ansible.builtin.shell: systemctl status postfix | egrep -i Active | awk '{ print $2,$3}'
+    #     register: active
+
+    - name: Save CSV headers
+      ansible.builtin.lineinfile:
+        insertbefore: BOF
+        line: Hostname,OS,Distro Ver,Kernel Ver,Postfix Status,FQDN,Total VCPU,Total RAM,Total SWAP,Total Disk,Hyper-V
+        dest: ./reports/hosts_facts.csv
+        mode: '0644'
+        create: true
+        state: present
+      delegate_to: localhost
+      # run_once: true
+
+    - name: Kekers
+      ansible.builtin.debug:
+        msg: "hi"
+      delegate_to: localhost
+      when: inventory_hostname == ansible_play_hosts_all[0]
+
+    # - name: Build out CSV file
+    #   ansible.builtin.lineinfile:
+    #     dest: "{{ csv_path }}/{{ csv_filename }}"
+    #     line: "{{ inventory_hostname }},{{ ansible_distribution }},{{ ansible_distribution_version }},{{ ansible_kernel }},{{ active.stdout }},{{ ansible_fqdn }},{{ ansible_processor_vcpus }},{{ ansible_memtotal_mb }},{{ ansible_swaptotal_mb }},{{ ansible_devices.vda.partitions.vda1.size }},{{ ansible_product_name }}" # noqa: yaml[line-length]
+    #     mode: '0644'
+    #     create: true
+    #     state: present
+    #   delegate_to: localhost
+
+    # - name: Read in CSV to variable
+    #   community.general.read_csv:
+    #     path: "{{ csv_path }}/{{ csv_filename }}"
+    #   register: csv_file
+    #   delegate_to: localhost
+    #   run_once: true
+
+    # - name: Send Email
+    #   community.general.mail:
+    #     host: "{{ email_host }}"
+    #     from: "{{ email_from }}"
+    #     port: 25
+    #     to: "{{ email_to }}"
+    #     subject: "[Ansible] {{ email_subject }}"
+    #     body: "{{ lookup('template', 'report.html.j2') }}"
+    #     attach: "{{ csv_path }}/{{ csv_filename }}"
+    #     subtype: html
+    #   delegate_to: localhost
+    #   run_once: true
+
+    # - name: Create html
+    #   ansible.builtin.copy:
+    #     content: "{{ lookup('template', 'files/report/report.html.j2') }}"
+    #     dest: /tmp/report.html
+    #     owner: root
+    #     group: root
+    #     mode: '0644'
+    #   delegate_to: localhost
+    #   run_once: true
