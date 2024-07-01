@@ -1,9 +1,10 @@
 ---
 # file: test.yml
 - name: Test playbook
-  hosts: all
+  hosts: pve
   tasks:
     - name: Testing debug
       ansible.builtin.debug:
-        msg:
-          - "sup son"
+        msg: "{{ ansible_hostname }}"
+      when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
+      loop: "{{ groups['lxc'] }}"

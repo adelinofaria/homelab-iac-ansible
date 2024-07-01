@@ -4,3 +4,6 @@
   ansible.builtin.systemd_service:
     name: systemd-logind
     masked: true
+
+# systemctl status systemd-logind.service
+# systemctl mask systemd-logind.service

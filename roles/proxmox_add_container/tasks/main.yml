@@ -1,32 +1,46 @@
 ---
-# file: roles/proxmox_edit_container/tasks/main.yml
-- name: Update container configuration
+# file: roles/proxmox_add_container/tasks/main.yml
+- name: Make sure base system container template is present
+  community.general.proxmox_template:
+    node: "{{ hostvars[item].node }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ inventory_hostname }}"
+    storage: "{{ hostvars[item].template_storage }}"
+    content_type: "{{ hostvars[item].template_content_type }}"
+    template: "{{ hostvars[item].template }}"
+    state: present
+  when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
+  loop: "{{ groups['lxc'] }}"
+
+- name: Create lxc containers
   community.general.proxmox:
     node: "{{ hostvars[item].node }}"
     api_host: "{{ inventory_hostname }}"
     api_user: "{{ api_user }}"
     api_password: "{{ api_password }}"
+    ostemplate: "{{ hostvars[item].ostemplate }}"
     vmid: "{{ hostvars[item].vmid }}"
     hostname: "{{ item }}"
     description: "{{ hostvars[item].description }}"
     cores: "{{ hostvars[item].cores }}"
     memory: "{{ hostvars[item].memory }}"
     swap: "{{ hostvars[item].swap }}"
-    storage: "{{ hostvars[item].storage }}"
+    storage: "{{ hostvars[item].storage }}" # Hidden required field
     netif: '{"net0":"name=eth0,hwaddr={{ hostvars[item].hwaddr }},gw={{ hostvars[item].gw }},ip={{ hostvars[item].ip }},gw6={{ hostvars[item].gw6 }},ip6={{ hostvars[item].ip6 }},bridge=vmbr0"}' # noqa: yaml[line-length]
     pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
     timezone: host
     onboot: true
-    update: true
+    state: present
   when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
   loop: "{{ groups['lxc'] }}"
 
-- name: Restart container(stopped or mounted container you can't restart)
+- name: Start containers
   community.general.proxmox:
     api_host: "{{ inventory_hostname }}"
     api_user: "{{ api_user }}"
     api_password: "{{ api_password }}"
     vmid: "{{ hostvars[item].vmid }}"
-    state: restarted
+    state: started
   when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
   loop: "{{ groups['lxc'] }}"

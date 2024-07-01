@@ -21,10 +21,18 @@ This will update container configs on all managed nodes.
 ```
 ansible-playbook edit.yml -i inventory
 ```
+Edit only the nodes managed by pve01 named dns01
+```
+ansible-playbook edit.yml -i inventory --limit pve01,dns01
+```
 ### Delete infrastructure
 This will delete all managed nodes.
 ```
 ansible-playbook nuke.yml -i inventory
+```
+Delete only the nodes managed by pve01 named dns01
+```
+ansible-playbook nuke.yml -i inventory --limit pve01,dns01
 ```
 ### Report whole infrastructure
 ```

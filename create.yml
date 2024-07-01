@@ -1,0 +1,8 @@
+---
+# file: create.yml
+- name: Create infrastructure hosts playbook
+  hosts: pve
+  tasks:
+    - name: Create infrastructure
+      ansible.builtin.include_role:
+        name: proxmox_add_container

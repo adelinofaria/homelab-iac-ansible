@@ -5,11 +5,16 @@ node: pve01
 vmid: 200
 cores: 1
 memory: 512
+swap: 1024
 storage: local-lvm
-hwaddr: 03:00:00:00:00:0c
+hwaddr: 02:00:00:00:00:0c
 ip: 192.168.1.12/24
 gw: 192.168.1.1
-ip6: fe80::c
+ip6: fe80::c/10
 gw6: fe80::ff:fe00:2201
+template_storage: local
+template_content_type: vztmpl
+template: debian-12-standard_12.2-1_amd64.tar.zst
+ostemplate: 'local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst'
 description: SWAG LXC - SWAG is a rebirth of our letsencrypt docker image, a full fledged web server and reverse proxy that includes Nginx, Php7, Certbot (Let's Encrypt client) and Fail2ban.
 notes: n/a

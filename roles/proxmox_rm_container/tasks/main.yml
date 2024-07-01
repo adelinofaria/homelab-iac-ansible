@@ -8,7 +8,7 @@
     vmid: "{{ hostvars[item].vmid }}"
     force: true
     state: stopped
-  when: hostvars[item].node == ansible_hostname
+  when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
   loop: "{{ groups['lxc'] }}"
 
 - name: Remove container
@@ -18,5 +18,5 @@
     api_password: "{{ api_password }}"
     vmid: "{{ hostvars[item].vmid }}"
     state: absent
-  when: hostvars[item].node == ansible_hostname
+  when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
   loop: "{{ groups['lxc'] }}"
