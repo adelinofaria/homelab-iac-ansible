@@ -10,3 +10,4 @@ gw: 192.168.1.1
 ip: 192.168.1.3/24
 ip6: fe80::3
 description: Unbound LXC - All outbound DNS requests will pass through here
+notes: Has a cron job every 3mon to udpate upstream regestries
