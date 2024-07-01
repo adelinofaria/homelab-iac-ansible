@@ -4,7 +4,7 @@
   hosts: all
   gather_facts: true
   vars:
-    headers: ip,ip6,mac,ihostname,hostname,domain,fqdn,vrole,vrole_info,vtype,vcpu,memtotal,storage,distro,distro_release,arch,notes # noqa: yaml[line-length]
+    headers: ip,ip6,mac,ihostname,hostname,domain,fqdn,vrole,vrole_info,vtype,vcpu,memtotal,storage,os,notes # noqa: yaml[line-length]
 
     fields_values:
       - "{{ ansible_default_ipv4.address is defined | ansible.builtin.ternary(ansible_default_ipv4.address,'null') }}"
@@ -20,10 +20,9 @@
       - "{{ ansible_processor_vcpus is defined | ansible.builtin.ternary(ansible_processor_vcpus,'null') }}"
       - "{{ ansible_memory_mb.real.total is defined | ansible.builtin.ternary(ansible_memory_mb.real.total,'null') }}"
       - "{{ storage is defined | ansible.builtin.ternary(storage,'null') }}"
-      - "{{ ansible_distribution is defined | ansible.builtin.ternary(ansible_distribution,'null') }}"
-      - "{{ ansible_distribution_release is defined | ansible.builtin.ternary(ansible_distribution_release,'null') }}"
-      - "{{ ansible_architecture is defined | ansible.builtin.ternary(ansible_architecture,'null') }}"
+      - "{{ ansible_distribution is defined | ansible.builtin.ternary(ansible_distribution,'null') }}-{{ ansible_distribution_version is defined | ansible.builtin.ternary(ansible_distribution_version,'null') }}-{{ ansible_distribution_release is defined | ansible.builtin.ternary(ansible_distribution_release,'null') }}-{{ ansible_architecture is defined | ansible.builtin.ternary(ansible_architecture,'null') }}" # noqa: yaml[line-length]
       - "{{ notes is defined | ansible.builtin.ternary(notes,'null') }}"
+
 
   tasks:
     - name: Delete existing hosts_facts.csv
