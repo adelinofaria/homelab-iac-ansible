@@ -1,15 +1,18 @@
 ---
 # file: inventory/host_vars/plex01.yml
-ansible_host: 192.168.1.12
-vmid: 200
+ansible_host: 192.168.1.25
+node: pve01
+vmid: 310
 cores: 2
 memory: 1024
 storage: local-lvm
-hwaddr: 02:00:00:00:00:0c
+hwaddr: 03:00:00:00:00:19
+ip: 192.168.1.25/24
 gw: 192.168.1.1
-ip: 192.168.1.16/24
-ip6: fe80::c
+ip6: fe80::19
+gw6: fe80::ff:fe00:2201
 description: Plex Media Server LXC - Transcode with hardware and USB storage
+notes: n/a
 
 
 # #     mounts: '{"mp0":"local:8,mp=/mnt/test/"}'

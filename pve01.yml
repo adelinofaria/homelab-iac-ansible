@@ -1,13 +1,13 @@
 ---
 # file: pve01.yml
 - name: Running pve01.yml playbook
-  hosts: pve01
+  hosts: pve
   roles:
     - proxmox
   tasks:
     - name: Make sure base system container template is present
       community.general.proxmox_template:
-        node: "{{ operating_node }}"
+        node: "{{ ansible_hostname }}"
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
         api_host: "{{ inventory_hostname }}"
@@ -16,29 +16,9 @@
         template: debian-12-standard_12.2-1_amd64.tar.zst
         state: present
 
-    - name: Stop container with delay 15s
-      community.general.proxmox:
-        api_host: "{{ inventory_hostname }}"
-        api_user: "{{ api_user }}"
-        api_password: "{{ api_password }}"
-        vmid: "{{ hostvars[item].vmid }}"
-        # force: true
-        state: stopped
-        timeout: 15
-      loop: "{{ groups['lxc'] }}"
-
-    # - name: Remove container
-    #   community.general.proxmox:
-    #     api_host: "{{ inventory_hostname }}"
-    #     api_user: "{{ api_user }}"
-    #     api_password: "{{ api_password }}"
-    #     vmid: "{{ hostvars[item].vmid }}"
-    #     state: absent
-    #  loop: "{{ groups['lxc'] }}"
-
     - name: Create lxc containers
       community.general.proxmox:
-        node: "{{ operating_node }}"
+        node: "{{ ansible_hostname }}"
         api_host: "{{ inventory_hostname }}"
         api_user: "{{ api_user }}"
         api_password: "{{ api_password }}"
@@ -53,26 +33,7 @@
         pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
         timezone: host
         onboot: true
-      loop: "{{ groups['lxc'] }}"
-
-
-    - name: Update container configuration
-      community.general.proxmox:
-        node: "{{ operating_node }}"
-        api_host: "{{ inventory_hostname }}"
-        api_user: "{{ api_user }}"
-        api_password: "{{ api_password }}"
-        vmid: "{{ hostvars[item].vmid }}"
-        hostname: "{{ item }}"
-        description: "{{ hostvars[item].description }}"
-        cores: "{{ hostvars[item].cores }}"
-        memory: "{{ hostvars[item].memory }}"
-        storage: "{{ hostvars[item].storage }}"
-        netif: '{"net0":"name=eth0,hwaddr={{ hostvars[item].hwaddr }},gw={{ hostvars[item].gw }},ip={{ hostvars[item].ip }},ip6=dhcp,bridge=vmbr0"}'
-        pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
-        timezone: host
-        onboot: true
-        update: true
+        state: present
       loop: "{{ groups['lxc'] }}"
 
     - name: Start containers
@@ -83,11 +44,3 @@
         vmid: "{{ hostvars[item].vmid }}"
         state: started
       loop: "{{ groups['lxc'] }}"
-
-    # - name: Convert container to template
-    #   community.general.proxmox:
-    #     api_host: "{{ inventory_hostname }}"
-    #     api_user: "{{ api_user }}"
-    #     api_password: "{{ api_password }}"
-    #     vmid: 100
-    #     state: template

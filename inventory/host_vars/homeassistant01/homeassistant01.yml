@@ -1,0 +1,15 @@
+---
+# file: inventory/host_vars/homeassistant01.yml
+ansible_host: 192.168.1.24
+node: pve01
+vmid: 300
+cores: 1
+memory: 512
+storage: local-lvm
+hwaddr: 03:00:00:00:00:18
+ip: 192.168.1.24/24
+gw: 192.168.1.1
+ip6: fe80::18
+gw6: fe80::ff:fe00:2201
+description: Home Assistant LXC - Open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts. Perfect to run on a Raspberry Pi or a local server.
+notes: n/a

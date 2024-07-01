@@ -1,0 +1,42 @@
+---
+# file: roles/proxmox_edit_container/tasks/main.yml
+- name: Stop container with delay 15s
+  community.general.proxmox:
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ hostvars[item].vmid }}"
+    timeout: 15
+    state: stopped
+  when: hostvars[item].node == ansible_hostname
+  loop: "{{ groups['lxc'] }}"
+
+- name: Update container configuration
+  community.general.proxmox:
+    node: "{{ ansible_hostname }}"
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ hostvars[item].vmid }}"
+    hostname: "{{ item }}"
+    description: "{{ hostvars[item].description }}"
+    cores: "{{ hostvars[item].cores }}"
+    memory: "{{ hostvars[item].memory }}"
+    storage: "{{ hostvars[item].storage }}"
+    netif: '{"net0":"name=eth0,hwaddr={{ hostvars[item].hwaddr }},ip={{ hostvars[item].ip }},gw={{ hostvars[item].gw }},ip6={{ hostvars[item].ip6 }},gw6={{ hostvars[item].gw6 }},bridge=vmbr0"}' # noqa: yaml[line-length]
+    pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+    timezone: host
+    onboot: true
+    update: true
+  when: hostvars[item].node == ansible_hostname
+  loop: "{{ groups['lxc'] }}"
+
+- name: Start containers
+  community.general.proxmox:
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ hostvars[item].vmid }}"
+    state: started
+  when: hostvars[item].node == ansible_hostname
+  loop: "{{ groups['lxc'] }}"

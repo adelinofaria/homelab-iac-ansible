@@ -1,0 +1,13 @@
+---
+# file: edit.yml
+- name: Modify infrastructure playbook
+  hosts: pve
+  vars_prompt:
+    - name: "sure"
+      prompt: "This will modify your entire infrastructure defined in `inventory`, are you sure (yN)?"
+      private: false
+  tasks:
+    - name: Modifying infrastructure
+      ansible.builtin.include_role:
+        name: proxmox_edit_container
+      when: sure == "y"

@@ -1,0 +1,22 @@
+---
+# file: roles/proxmox_rm_container/tasks/main.yml
+- name: Stop container with prejudice
+  community.general.proxmox:
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ hostvars[item].vmid }}"
+    force: true
+    state: stopped
+  when: hostvars[item].node == ansible_hostname
+  loop: "{{ groups['lxc'] }}"
+
+- name: Remove container
+  community.general.proxmox:
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ hostvars[item].vmid }}"
+    state: absent
+  when: hostvars[item].node == ansible_hostname
+  loop: "{{ groups['lxc'] }}"

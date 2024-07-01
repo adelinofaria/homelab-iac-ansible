@@ -7,22 +7,21 @@
     headers: ip,ip6,mac,ihostname,hostname,domain,fqdn,vrole,vrole_info,vtype,vcpu,memtotal,storage,os,notes # noqa: yaml[line-length]
 
     fields_values:
-      - "{{ ansible_default_ipv4.address is defined | ansible.builtin.ternary(ansible_default_ipv4.address,'null') }}"
-      - "{{ ansible_default_ipv6.address is defined | ansible.builtin.ternary(ansible_default_ipv6.address,'null') }}"
-      - "{{ ansible_default_ipv4.macaddress is defined | ansible.builtin.ternary(ansible_default_ipv4.macaddress,'null') }}"
-      - "{{ inventory_hostname is defined | ansible.builtin.ternary(inventory_hostname,'null') }}"
-      - "{{ ansible_hostname is defined | ansible.builtin.ternary(ansible_hostname,'null') }}"
-      - "{{ ansible_domain is defined | ansible.builtin.ternary(ansible_domain,'null') }}"
-      - "{{ ansible_fqdn is defined | ansible.builtin.ternary(ansible_fqdn,'null') }}"
-      - "{{ ansible_virtualization_role is defined | ansible.builtin.ternary(ansible_virtualization_role,'null') }}"
-      - "{{ (ansible_virtualization_role == 'host') | ansible.builtin.ternary(ansible_virtualization_tech_host is defined | ansible.builtin.ternary(ansible_virtualization_tech_host | join(' '),'null'), ansible_virtualization_tech_guest is defined | ansible.builtin.ternary(ansible_virtualization_tech_guest | join(' '),'null')) }}" # noqa: yaml[line-length]
-      - "{{ ansible_virtualization_type is defined | ansible.builtin.ternary(ansible_virtualization_type,'null') }}"
-      - "{{ ansible_processor_vcpus is defined | ansible.builtin.ternary(ansible_processor_vcpus,'null') }}"
-      - "{{ ansible_memory_mb.real.total is defined | ansible.builtin.ternary(ansible_memory_mb.real.total,'null') }}"
-      - "{{ storage is defined | ansible.builtin.ternary(storage,'null') }}"
-      - "{{ ansible_distribution is defined | ansible.builtin.ternary(ansible_distribution,'null') }}-{{ ansible_distribution_version is defined | ansible.builtin.ternary(ansible_distribution_version,'null') }}-{{ ansible_distribution_release is defined | ansible.builtin.ternary(ansible_distribution_release,'null') }}-{{ ansible_architecture is defined | ansible.builtin.ternary(ansible_architecture,'null') }}" # noqa: yaml[line-length]
-      - "{{ notes is defined | ansible.builtin.ternary(notes,'null') }}"
-
+      - "{{ ansible_default_ipv4.address | default('null') }}"
+      - "{{ ansible_default_ipv6.address | default('null') }}"
+      - "{{ ansible_default_ipv4.macaddress | default('null') }}"
+      - "{{ inventory_hostname | default('null') }}"
+      - "{{ ansible_hostname | default('null') }}"
+      - "{{ ansible_domain | default('null') }}"
+      - "{{ ansible_fqdn | default('null') }}"
+      - "{{ ansible_virtualization_role | default('null') }}"
+      - "{{ (ansible_virtualization_role == 'host') | ansible.builtin.ternary(ansible_virtualization_tech_host is defined | ansible.builtin.ternary(ansible_virtualization_tech_host | sort | join(' '),'null'), ansible_virtualization_tech_guest is defined | ansible.builtin.ternary(ansible_virtualization_tech_guest | sort | join(' '),'null')) }}" # noqa: yaml[line-length]
+      - "{{ ansible_virtualization_type | default('null') }}"
+      - "{{ ansible_processor_vcpus | default('null') }}"
+      - "{{ ansible_memory_mb.real.total | default('null') }}"
+      - "{{ storage | default('null') }}"
+      - "{{ ansible_distribution | default('null') }}-{{ ansible_distribution_version | default('null') }}-{{ ansible_distribution_release | default('null') }}-{{ ansible_architecture | default('null') }}" # noqa: yaml[line-length]
+      - "{{ notes | default('null') }}"
 
   tasks:
     - name: Delete existing hosts_facts.csv

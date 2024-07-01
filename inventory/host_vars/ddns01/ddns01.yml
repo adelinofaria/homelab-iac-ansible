@@ -1,0 +1,15 @@
+---
+# file: inventory/host_vars/ddns01.yml
+ansible_host: 192.168.1.4
+node: pve01
+vmid: 120
+cores: 1
+memory: 64
+storage: local-lvm
+hwaddr: 03:00:00:00:00:04
+ip: 192.168.1.4/24
+gw: 192.168.1.1
+ip6: fe80::4
+gw6: fe80::ff:fe00:2201
+description: Cloudflare DDNS LXC -  A feature-rich and robust Cloudflare DDNS updater with a small footprint. The program will detect your machine's public IP addresses and update DNS records using the Cloudflare API.
+notes: Manages adelinofaria.me at Cloudflare

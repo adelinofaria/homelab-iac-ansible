@@ -1,0 +1,13 @@
+---
+# file: main.yml
+- name: Infrastructure nuke playbook
+  hosts: pve
+  vars_prompt:
+    - name: "sure"
+      prompt: "This will nuke your entire infrastructure defined in `inventory`, are you sure (yN)?"
+      private: false
+  tasks:
+    - name: Nuking infrastructure with soviet grade nuclear icbm
+      ansible.builtin.include_role:
+        name: proxmox_rm_container
+      when: sure == "y"
