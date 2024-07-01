@@ -1,5 +1,16 @@
 # homelab-iac-ansible
 Full homelab infrastructure using ansible
+## Requisites
+- A server with Proxmox VE installed - described in ```inventory/hosts``` as ```pve01```
+- Control host with shh & python & ansible installed
+## First time setup steps
+1. generate your own ssh key at ./ssh-keys
+    1. ```ssh-keygen -f homelab```
+2. Add the recently generated key to ssh-agent
+    1. ```ssh-add ssh-keys/homelab```
+3. Setup your own vault for  ```pve01```
+    1. ```ansible-vault create inventory/host_vars/pve01/vault```
+    2. Add the following line to the file and save ```vault_api_password: <your own password>```
 ## Run through docker instructions
 ### Build image
 ```docker build -t ansible:latest .```
