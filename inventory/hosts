@@ -7,10 +7,13 @@ pihole01 # -> dns01
 unbound01 # -> updns01
 # ddns01
 # webserver01
-# docker01
+# logs01
 # homeassistant01
 # plex01
 # jenkins01
+
+[kvm]
+# docker01
 
 [docker]
 # ansible

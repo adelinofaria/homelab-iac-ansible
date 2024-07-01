@@ -9,5 +9,5 @@
   tasks:
     - name: Modifying infrastructure
       ansible.builtin.include_role:
-        name: proxmox_edit_container
+        name: proxmox_lxc_edit_container
       when: sure == "y"

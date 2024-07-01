@@ -9,5 +9,5 @@
   tasks:
     - name: Nuking infrastructure with soviet grade nuclear icbm
       ansible.builtin.include_role:
-        name: proxmox_rm_container
+        name: proxmox_lxc_rm_container
       when: sure == "y"

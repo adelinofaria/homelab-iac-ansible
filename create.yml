@@ -5,4 +5,4 @@
   tasks:
     - name: Create infrastructure
       ansible.builtin.include_role:
-        name: proxmox_add_container
+        name: proxmox_lxc_add_container
