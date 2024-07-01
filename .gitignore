@@ -134,3 +134,4 @@ $RECYCLE.BIN/
 
 # Ingore ssh-keys
 ssh-keys/*
+inventory/host_vars/pve01/vault
