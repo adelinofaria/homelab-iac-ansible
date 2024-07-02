@@ -7,7 +7,11 @@
       prompt: "This will modify your entire infrastructure defined in `inventory`, are you sure (yN)?"
       private: false
   tasks:
-    - name: Modifying infrastructure
+    - name: Modifying lxc infrastructure
       ansible.builtin.include_role:
         name: proxmox_lxc_edit_container
+      when: sure == "y"
+    - name: Modifying kvm infrastructure
+      ansible.builtin.include_role:
+        name: proxmox_kvm_edit_container
       when: sure == "y"

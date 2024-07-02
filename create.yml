@@ -3,6 +3,9 @@
 - name: Create infrastructure hosts playbook
   hosts: pve
   tasks:
-    - name: Create infrastructure
+    - name: Create lxc infrastructure
       ansible.builtin.include_role:
         name: proxmox_lxc_add_container
+    - name: Create kvm infrastructure
+      ansible.builtin.include_role:
+        name: proxmox_kvm_add_container

@@ -1,2 +1,26 @@
 ---
 # file: roles/proxmox_kvm_edit_container/tasks/main.yml
+- name: Update VM configuration
+  community.general.proxmox_kvm:
+    node: "{{ hostvars[item].node }}"
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ hostvars[item].vmid }}"
+    name: "{{ item }}"
+    description: "{{ hostvars[item].description }}" # ?
+    cores: "{{ hostvars[item].cores }}"
+    vcpus: 1
+    memory: "{{ hostvars[item].memory }}"
+    scsihw: 'virtio-scsi-single'
+    virtio:
+      virtio0: 'local-lvm:16,iothread=on'
+    net:
+      net0: "virtio={{ hostvars[item].hwaddr }},bridge=vmbr0"
+    ipconfig:
+      ipconfig0: "ip={{ hostvars[item].ip }},gw={{ hostvars[item].gw }},ip6={{ hostvars[item].ip6 }},gw6={{ hostvars[item].gw6 }}"
+    sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+    onboot: true
+    update: true
+  when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['kvm'])))
+  loop: "{{ groups['kvm'] }}"

@@ -7,7 +7,11 @@
       prompt: "This will nuke your entire infrastructure defined in `inventory`, are you sure (yN)?"
       private: false
   tasks:
-    - name: Nuking infrastructure with soviet grade nuclear icbm
+    - name: Nuking lxc infrastructure with soviet grade nuclear icbm
       ansible.builtin.include_role:
         name: proxmox_lxc_rm_container
+      when: sure == "y"
+    - name: Nuking kvm infrastructure with soviet grade nuclear icbm
+      ansible.builtin.include_role:
+        name: proxmox_kvm_rm_container
       when: sure == "y"

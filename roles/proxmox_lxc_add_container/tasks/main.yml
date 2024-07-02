@@ -3,9 +3,9 @@
 - name: Make sure base system container template is present
   community.general.proxmox_template:
     node: "{{ hostvars[item].node }}"
+    api_host: "{{ inventory_hostname }}"
     api_user: "{{ api_user }}"
     api_password: "{{ api_password }}"
-    api_host: "{{ inventory_hostname }}"
     storage: "{{ hostvars[item].template_storage }}"
     content_type: "{{ hostvars[item].template_content_type }}"
     template: "{{ hostvars[item].template }}"

@@ -1,0 +1,4 @@
+---
+# file: inventory/group_vars/kvm.yml
+ansible_user: root
+ansible_ssh_private_key_file: ../../ssh-keys/homelab
