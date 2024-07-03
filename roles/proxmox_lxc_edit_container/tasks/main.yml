@@ -1,6 +1,6 @@
 ---
 # file: roles/proxmox_lxc_edit_container/tasks/main.yml
-- name: Update config lxc vmid-{{ hostvars[item].vmid }}
+- name: Update config lxc vmid-{{ proxmox_lxc_edit_container_vmid }}
   community.general.proxmox:
     node: "{{ proxmox_lxc_edit_container_node }}"
     api_host: "{{ proxmox_lxc_edit_container_api_host }}"
@@ -28,7 +28,7 @@
     update: true
 
 # Stopped or mounted container can't be restarted
-- name: Restart lxc vmid-{{ hostvars[item].vmid }}
+- name: Restart lxc vmid-{{ proxmox_lxc_edit_container_vmid }}
   community.general.proxmox:
     api_host: "{{ proxmox_lxc_edit_container_api_host }}"
     api_user: "{{ proxmox_lxc_edit_container_api_user }}"

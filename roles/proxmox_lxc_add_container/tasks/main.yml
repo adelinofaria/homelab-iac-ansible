@@ -11,7 +11,7 @@
     template: "{{ proxmox_lxc_add_container_template }}"
     state: present
 
-- name: Add lxc vmid-{{ hostvars[item].vmid }}
+- name: Add lxc vmid-{{ proxmox_lxc_add_container_vmid }}
   community.general.proxmox:
     node: "{{ proxmox_lxc_add_container_node }}"
     api_host: "{{ proxmox_lxc_add_container_api_host }}"
@@ -39,7 +39,7 @@
     onboot: "{{ proxmox_lxc_add_container_onboot }}"
     state: present
 
-- name: Start lxc vmid-{{ hostvars[item].vmid }}
+- name: Start lxc vmid-{{ proxmox_lxc_add_container_vmid }}
   community.general.proxmox:
     api_host: "{{ proxmox_lxc_add_container_api_host }}"
     api_user: "{{ proxmox_lxc_add_container_api_user }}"

@@ -1,7 +1,7 @@
 ---
 # file: roles/proxmox_kvm_rm_container/tasks/main.yml
 
-- name: Retrieve info kvm vmid-{{ hostvars[item].vmid }}
+- name: Retrieve info kvm vmid-{{ proxmox_kvm_rm_container_vmid }}
   community.general.proxmox_vm_info:
     api_host: "{{ proxmox_kvm_rm_container_api_host }}"
     api_user: "{{ proxmox_kvm_rm_container_api_user }}"
@@ -13,7 +13,7 @@
 - name: Deletion block
   when: _proxmox_kvm_rm_container_vm_info.proxmox_vms | length
   block:
-    - name: Stop with prejudice kvm vmid-{{ hostvars[item].vmid }}
+    - name: Stop with prejudice kvm vmid-{{ proxmox_kvm_rm_container_vmid }}
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_kvm_rm_container_api_host }}"
         api_user: "{{ proxmox_kvm_rm_container_api_user }}"
@@ -22,7 +22,7 @@
         force: true
         state: stopped
 
-    - name: Remove kvm vmid-{{ hostvars[item].vmid }}
+    - name: Remove kvm vmid-{{ proxmox_kvm_rm_container_vmid }}
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_kvm_rm_container_api_host }}"
         api_user: "{{ proxmox_kvm_rm_container_api_user }}"

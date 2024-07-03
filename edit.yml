@@ -45,6 +45,7 @@
           ansible.builtin.include_role:
             name: proxmox_kvm_edit_container
           vars:
+            proxmox_kvm_edit_container_node: "{{ hostvars[item].node }}"
             proxmox_kvm_edit_container_api_host: "{{ inventory_hostname }}"
             proxmox_kvm_edit_container_api_user: "{{ api_user }}"
             proxmox_kvm_edit_container_api_password: "{{ api_password }}"

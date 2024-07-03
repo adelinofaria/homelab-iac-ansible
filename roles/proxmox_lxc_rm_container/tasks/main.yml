@@ -1,7 +1,7 @@
 ---
 # file: roles/proxmox_lxc_rm_container/tasks/main.yml
 
-- name: Retrieve info lxc vmid-{{ hostvars[item].vmid }}
+- name: Retrieve info lxc vmid-{{ proxmox_lxc_rm_container_vmid }}
   community.general.proxmox_vm_info:
     api_host: "{{ proxmox_lxc_rm_container_api_host }}"
     api_user: "{{ proxmox_lxc_rm_container_api_user }}"
@@ -13,7 +13,7 @@
 - name: Deletion block
   when: _proxmox_kvm_rm_container_vm_info.proxmox_vms | length
   block:
-    - name: Stop with prejudice lxc vmid-{{ hostvars[item].vmid }}
+    - name: Stop with prejudice lxc vmid-{{ proxmox_lxc_rm_container_vmid }}
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_lxc_rm_container_api_host }}"
         api_user: "{{ proxmox_lxc_rm_container_api_user }}"
@@ -21,7 +21,7 @@
         vmid: "{{ proxmox_lxc_rm_container_vmid }}"
         force: true
         state: stopped
-    - name: Remove lxc vmid-{{ hostvars[item].vmid }}
+    - name: Remove lxc vmid-{{ proxmox_lxc_rm_container_vmid }}
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_lxc_rm_container_api_host }}"
         api_user: "{{ proxmox_lxc_rm_container_api_user }}"
