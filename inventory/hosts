@@ -16,7 +16,7 @@ unbound01 # -> updns01
 docker01
 
 [docker]
-# ansible
+ansible
 
 [debian]
 pve01
@@ -30,4 +30,4 @@ docker01
 # jenkins01
 
 [alipne]
-# ansible
+ansible

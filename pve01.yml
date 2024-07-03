@@ -29,7 +29,14 @@
         cores: "{{ hostvars[item].cores }}"
         memory: "{{ hostvars[item].memory }}"
         storage: "{{ hostvars[item].storage }}" # Hidden required field
-        netif: '{"net0":"name=eth0,hwaddr={{ hostvars[item].hwaddr }},gw={{ hostvars[item].gw }},ip={{ hostvars[item].ip }},ip6=dhcp,bridge=vmbr0"}'
+        netif:
+          net0:
+            name: 'eth0'
+            hwaddr: "{{ hostvars[item].hwaddr }}"
+            gw: "{{ hostvars[item].gw }}"
+            ip: "{{ hostvars[item].ip }}"
+            ip6: 'dhcp'
+            bridge: 'vmbr0'
         pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
         timezone: host
         onboot: true

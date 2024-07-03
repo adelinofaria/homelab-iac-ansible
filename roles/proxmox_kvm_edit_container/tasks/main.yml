@@ -18,7 +18,11 @@
     net:
       net0: "virtio={{ hostvars[item].hwaddr }},bridge=vmbr0"
     ipconfig:
-      ipconfig0: "ip={{ hostvars[item].ip }},gw={{ hostvars[item].gw }},ip6={{ hostvars[item].ip6 }},gw6={{ hostvars[item].gw6 }}"
+      ipconfig0:
+        ip: "{{ hostvars[item].ip }}"
+        gw: "{{ hostvars[item].gw }}"
+        ip6: "{{ hostvars[item].ip6 }}"
+        gw6: "{{ hostvars[item].gw6 }}"
     sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
     onboot: true
     update: true

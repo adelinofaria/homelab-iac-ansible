@@ -3,15 +3,15 @@
 - name: Modify infrastructure playbook
   hosts: pve
   vars_prompt:
-    - name: "sure"
-      prompt: "This will modify your entire infrastructure defined in `inventory`, are you sure (yN)?"
+    - name: prompt_confirmation
+      prompt: "This will modify all (non-pve) hosts on the play batch ({{ ansible_play_batch | join(',') }}), are you sure (yN)?"
       private: false
   tasks:
     - name: Modifying lxc infrastructure
+      when: prompt_confirmation | lower == 'y'
       ansible.builtin.include_role:
         name: proxmox_lxc_edit_container
-      when: sure == "y"
     - name: Modifying kvm infrastructure
+      when: prompt_confirmation | lower == 'y'
       ansible.builtin.include_role:
         name: proxmox_kvm_edit_container
-      when: sure == "y"

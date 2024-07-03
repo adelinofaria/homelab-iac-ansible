@@ -3,15 +3,15 @@
 - name: Infrastructure nuke playbook
   hosts: pve
   vars_prompt:
-    - name: "sure"
-      prompt: "This will nuke your entire infrastructure defined in `inventory`, are you sure (yN)?"
+    - name: "prompt_confirmation"
+      prompt: "This will nuke all (non-pve) hosts on the play batch ({{ ansible_play_batch | join(',') }}), are you sure (yN)?"
       private: false
   tasks:
     - name: Nuking lxc infrastructure with soviet grade nuclear icbm
+      when: prompt_confirmation | lower == 'y'
       ansible.builtin.include_role:
         name: proxmox_lxc_rm_container
-      when: sure == "y"
     - name: Nuking kvm infrastructure with soviet grade nuclear icbm
+      when: prompt_confirmation | lower == 'y'
       ansible.builtin.include_role:
         name: proxmox_kvm_rm_container
-      when: sure == "y"

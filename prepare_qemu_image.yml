@@ -1,0 +1,6 @@
+---
+# file: prepare_qemu_image.yml
+- name: Prepares a qemu image to create kvm images
+  hosts: pve
+  roles:
+    - pve_qemu_img

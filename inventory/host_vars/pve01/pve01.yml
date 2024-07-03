@@ -3,3 +3,18 @@
 ansible_host: 192.168.1.8
 api_user: root@pam
 api_password: "{{ vault_api_password }}"
+qemu_base_image_remote_url: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
+qemu_base_image_dest: /tmp/debian-12-generic-amd64.qcow2
+qemu_base_image_checksum: sha512:9373b158ede97fa5a3eacb19bd0d2cc7dd18309582193cce3c96be96c5d03412d38b5232dac1673748171d359a3cf327e0369704eb8f0c32f97e522e52a68627
+qemu_modified_image_dest: /tmp/debian-12-generic-amd64+qemu.qcow2
+qemu_template_builder_vmid: 666
+qemu_template_name: debian-12-generic-amd64-template-docker
+
+
+# debian-12-generic-amd64.qcow2
+# https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
+# sha512:9373b158ede97fa5a3eacb19bd0d2cc7dd18309582193cce3c96be96c5d03412d38b5232dac1673748171d359a3cf327e0369704eb8f0c32f97e522e52a68627
+
+# debian-12.6.0-amd64-DVD-1.iso
+# https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd/debian-12.6.0-amd64-DVD-1.iso
+# sha512:2b145412cfd5a9d11822386e685cb72cfada0e99c8ff69c8389a9caa5cffffa0d5ac072cb72c9a95b6a05b565d6da799fa32330c0beb33b05b1523a7848a4564

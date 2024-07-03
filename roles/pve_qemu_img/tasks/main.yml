@@ -1,0 +1,216 @@
+---
+# file: roles/pve_qemu_img/tasks/main.yml
+
+# ESTOURO
+
+- name: Stop container with prejudice
+  community.general.proxmox_kvm:
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ item }}"
+    force: true
+    state: stopped
+  loop: [220, 666]
+
+- name: Remove container
+  community.general.proxmox_kvm:
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ item }}"
+    state: absent
+  loop: [220, 666]
+
+############################################################
+
+- name: Check if base image exists
+  ansible.builtin.stat:
+    path: "{{ qemu_base_image_dest }}"
+  register:
+    _pve_qemu_base_img_dest
+
+- name: Download base image from source
+  when: not _pve_qemu_base_img_dest.stat.exists
+  ansible.builtin.get_url:
+    url: "{{ qemu_base_image_remote_url }}"
+    dest: "{{ qemu_base_image_dest }}"
+    mode: '0644'
+    checksum: "{{ qemu_base_image_checksum }}"
+
+- name: Retrieve info about 666 vmid
+  community.general.proxmox_vm_info:
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ qemu_template_builder_vmid }}"
+  register:
+    _pve_vm_info
+
+- name: Prompt confirmation for deletion
+  when: _pve_vm_info.proxmox_vms | length
+  block:
+    - name: User prompt for deletion
+      ansible.builtin.pause:
+        prompt: "This will will destroy {{ _pve_vm_info.proxmox_vms[0].vmid }} vmid, are you sure (Yn)?"
+      register: _prompt_confirmation
+
+    - name: Stop container with prejudice
+      when: _prompt_confirmation.user_input | lower != 'n'
+      community.general.proxmox_kvm:
+        api_host: "{{ inventory_hostname }}"
+        api_user: "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        vmid: "{{ qemu_template_builder_vmid }}"
+        force: true
+        state: stopped
+
+    - name: Remove container
+      when: _prompt_confirmation.user_input | lower != 'n'
+      community.general.proxmox_kvm:
+        api_host: "{{ inventory_hostname }}"
+        api_user: "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        vmid: "{{ qemu_template_builder_vmid }}"
+        state: absent
+
+- name: Create template vm
+  community.general.proxmox_kvm:
+    node: "{{ inventory_hostname }}"
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ qemu_template_builder_vmid }}"
+    name: "{{ qemu_template_name }}"
+    machine: q35
+    ostype: l26
+    bios: ovmf
+    cores: 1
+    sockets: 1
+    memory: 2048
+    agent: 'enabled=1'
+    boot: 'order=scsi0'
+    efidisk0:
+      storage: 'local-lvm'
+      format: 'raw'
+      efitype: 4m
+      pre_enrolled_keys: 1
+    serial:
+      serial0: 'socket'
+    vga: 'serial0'
+    scsihw: 'virtio-scsi-single'
+    scsi:
+      scsi0: "local-lvm:0,iothread=1,discard=on,import-from={{ qemu_base_image_dest }},format=raw"
+    ide:
+      ide2: "local-lvm:cloudinit,format=raw"
+    net:
+      net0: 'virtio,bridge=vmbr0,firewall=1'
+    template: true
+
+- name: Clone docker01 VM from cloud-init template
+  register: vm_result
+  community.general.proxmox_kvm:
+    node: "{{ inventory_hostname }}"
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ qemu_template_builder_vmid }}"
+    newid: 220
+    name: "docker01"
+    clone: "{{ qemu_template_name }}"
+    storage: 'local-lvm'
+
+- name: Grow docker01 VM disk
+  community.general.proxmox_disk:
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ vm_result.vmid }}"
+    disk: scsi0
+    size: 8G
+    state: resized
+
+- name: Update docker01 VM configuration
+  community.general.proxmox_kvm:
+    node: "{{ inventory_hostname }}"
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ vm_result.vmid }}"
+    agent: 1
+    cores: 1
+    memory: 2048
+    ciuser: user
+    cipassword: enter
+    ipconfig:
+      ipconfig0: 'ip=192.168.1.14/24,gw=192.168.1.1,ip6=fe80::e/10,gw6=fe80::ff:fe00:2201'
+    sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+    update: true
+
+- name: Start docker01 VM
+  community.general.proxmox_kvm:
+    node: "{{ inventory_hostname }}"
+    api_host: "{{ inventory_hostname }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    vmid: "{{ vm_result.vmid }}"
+    state: started
+
+# - name: Prompt for docker01 VM host
+#   register: target_host_result
+#   ansible.builtin.pause:
+#     prompt: "Enter host/IP for docker01 VM"
+
+- name: Add docker01 VM host
+  ansible.builtin.add_host:
+    name: docker01
+    groups: kvm
+
+# - name: Wait for virtual machines to finish rebooting
+#   ansible.builtin.wait_for:
+#     port: 22
+#     host: docker01
+#     search_regex: OpenSSH
+#     delay: 10
+#     timeout: 480
+#     msg: Timeout or polling failed.
+
+- name: Install qemu guest agent on docker01 VM
+  delegate_to: docker01
+  delegate_facts: true
+  become: true
+  ansible.builtin.package:
+    name: qemu-guest-agent
+    state: present
+    update_cache: true
+    install_recommends: false
+
+- name: Restart qemu guest agent on docker01 VM
+  delegate_to: docker01
+  delegate_facts: true
+  become: true
+  ansible.builtin.service:
+    name: qemu-guest-agent
+    state: restarted
+
+# What a fucking find son
+# https://gist.github.com/jkkor/e3b7e086c02a2b63ef5ace740db8850c
+# https://pve.proxmox.com/wiki/Cloud-Init_Support
+# https://github.com/UntouchedWagons/Ubuntu-CloudInit-Docs
+
+# default vm from GUI
+
+# cores 1
+# cpu x86-64-v2-AES
+# ide2 local:iso/debian-12.6.0-amd64-DVD-1.iso,media=cdrom
+# memory 2048
+# name docker01
+# net0 virtio=02:00:00:00:00:0e,bridge=vmbr0
+# nodename pve01
+# numa 0
+# onboot 1
+# ostype l26
+# scsihw virtio-scsi-single
+# sockets 1
+# virtio0 local-lvm:8,backup=0,iothread=on
+# vmid 220

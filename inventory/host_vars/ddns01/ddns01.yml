@@ -15,6 +15,6 @@ gw6: fe80::ff:fe00:2201
 template_storage: local
 template_content_type: vztmpl
 template: debian-12-standard_12.2-1_amd64.tar.zst
-ostemplate: 'local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst'
+ostemplate: local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst
 description: Cloudflare DDNS LXC -  A feature-rich and robust Cloudflare DDNS updater with a small footprint. The program will detect your machine's public IP addresses and update DNS records using the Cloudflare API.
 notes: Manages adelinofaria.me at Cloudflare

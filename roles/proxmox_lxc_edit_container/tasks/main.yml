@@ -13,7 +13,15 @@
     memory: "{{ hostvars[item].memory }}"
     swap: "{{ hostvars[item].swap }}"
     storage: "{{ hostvars[item].storage }}"
-    netif: '{"net0":"name=eth0,hwaddr={{ hostvars[item].hwaddr }},gw={{ hostvars[item].gw }},ip={{ hostvars[item].ip }},gw6={{ hostvars[item].gw6 }},ip6={{ hostvars[item].ip6 }},bridge=vmbr0"}' # noqa: yaml[line-length]
+    netif:
+      net0:
+        name: 'eth0'
+        hwaddr: "{{ hostvars[item].hwaddr }}"
+        gw: "{{ hostvars[item].gw }}"
+        ip: "{{ hostvars[item].ip }}"
+        gw6: "{{ hostvars[item].gw6 }}"
+        ip6: "{{ hostvars[item].ip6 }}"
+        bridge: 'vmbr0'
     pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
     timezone: host
     onboot: true

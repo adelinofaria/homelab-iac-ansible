@@ -15,7 +15,7 @@ gw6: fe80::ff:fe00:2201
 template_storage: local
 template_content_type: vztmpl
 template: debian-12-standard_12.2-1_amd64.tar.zst
-ostemplate: 'local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst'
+ostemplate: local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst
 description: Plex Media Server LXC - Transcode with hardware and USB storage
 notes: n/a
 

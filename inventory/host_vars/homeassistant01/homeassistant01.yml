@@ -15,6 +15,6 @@ gw6: fe80::ff:fe00:2201
 template_storage: local
 template_content_type: vztmpl
 template: debian-12-standard_12.2-1_amd64.tar.zst
-ostemplate: 'local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst'
+ostemplate: local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst
 description: Home Assistant LXC - Open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts. Perfect to run on a Raspberry Pi or a local server.
 notes: n/a

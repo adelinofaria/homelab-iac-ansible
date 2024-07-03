@@ -1,0 +1,25 @@
+---
+# file: create.yml
+- name: Create infrastructure hosts playbook
+  hosts: pve
+  vars_prompt:
+    - name: "prompt_confirmation"
+      prompt: "This will nuke and create all (non-pve) hosts on the play batch ({{ ansible_play_batch | join(',') }}), are you sure (yN)?"
+      private: false
+  tasks:
+    - name: Remove lxc infrastructure
+      when: prompt_confirmation | lower == 'y'
+      ansible.builtin.include_role:
+        name: proxmox_lxc_rm_container
+    - name: Remove kvm infrastructure
+      when: prompt_confirmation | lower == 'y'
+      ansible.builtin.include_role:
+        name: proxmox_kvm_rm_container
+    - name: Create lxc infrastructure
+      when: prompt_confirmation | lower == 'y'
+      ansible.builtin.include_role:
+        name: proxmox_lxc_add_container
+    - name: Create kvm infrastructure
+      when: prompt_confirmation | lower == 'y'
+      ansible.builtin.include_role:
+        name: proxmox_kvm_add_container
