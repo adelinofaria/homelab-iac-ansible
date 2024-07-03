@@ -71,8 +71,24 @@
           ansible.builtin.include_role:
             name: proxmox_kvm_add_container
           vars:
+            proxmox_kvm_add_container_node: "{{ hostvars[item].node }}"
             proxmox_kvm_add_container_api_host: "{{ inventory_hostname }}"
             proxmox_kvm_add_container_api_user: "{{ api_user }}"
             proxmox_kvm_add_container_api_password: "{{ api_password }}"
             proxmox_kvm_add_container_vmid: "{{ hostvars[item].vmid }}"
-            # TODO
+            proxmox_kvm_add_container_hostname: "{{ item }}"
+            proxmox_kvm_add_container_cores: "{{ hostvars[item].cores }}"
+            proxmox_kvm_add_container_memory: "{{ hostvars[item].memory }}"
+            proxmox_kvm_add_container_swap: "{{ hostvars[item].swap }}"
+            proxmox_kvm_add_container_storage: "{{ hostvars[item].storage }}"
+            proxmox_kvm_add_container_netif_net0_name: eth0
+            proxmox_kvm_add_container_netif_net0_hwaddr: "{{ hostvars[item].hwaddr }}"
+            proxmox_kvm_add_container_netif_net0_ip: "{{ hostvars[item].ip }}"
+            proxmox_kvm_add_container_netif_net0_gw: "{{ hostvars[item].gw }}"
+            proxmox_kvm_add_container_netif_net0_ip6: "{{ hostvars[item].ip6 }}"
+            proxmox_kvm_add_container_netif_net0_gw6: "{{ hostvars[item].gw6 }}"
+            proxmox_kvm_add_container_netif_net0_bridge: vmbr0
+            proxmox_kvm_add_container_pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+            proxmox_kvm_add_container_timezone: host
+            proxmox_kvm_add_container_description: "{{ hostvars[item].description }}"
+            proxmox_kvm_add_container_onboot: true

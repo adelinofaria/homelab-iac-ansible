@@ -1,0 +1,238 @@
+---
+# file: roles/proxmox_kvm_cloudinit_template/tasks/main.yml
+
+- name: Check if base image exists
+  ansible.builtin.stat:
+    path: "{{ proxmox_kvm_cloudinit_template_image_dest }}"
+  register:
+    _proxmox_kvm_cloudinit_template_image_dest
+
+- name: Download base image from source
+  when: not _proxmox_kvm_cloudinit_template_image_dest.stat.exists
+  ansible.builtin.get_url:
+    url: "{{ proxmox_kvm_cloudinit_template_image_remote_url }}"
+    dest: "{{ proxmox_kvm_cloudinit_template_image_dest }}"
+    mode: '0644'
+    checksum: "{{ proxmox_kvm_cloudinit_template_image_checksum }}"
+
+- name: Check if processed image exists
+  ansible.builtin.stat:
+    path: "{{ proxmox_kvm_cloudinit_template_image_modified_dest }}"
+  register:
+    _proxmox_kvm_cloudinit_template_image_modified_dest
+
+- name: Copy image to dest and resize
+  when: not _proxmox_kvm_cloudinit_template_image_modified_dest.stat.exists
+  block:
+    - name: Copy src image
+      ansible.builtin.copy:
+        src: "{{ proxmox_kvm_cloudinit_template_image_dest }}"
+        dest: "{{ proxmox_kvm_cloudinit_template_image_modified_dest }}"
+        mode: '0644'
+        remote_src: true
+    - name: Resize image
+      ansible.builtin.set_fact:
+        _qemu_img_resize_cmd: "qemu-img resize {{ proxmox_kvm_cloudinit_template_image_modified_dest }} 8G"
+
+- name: Retrieve info template kvm vmid-{{ proxmox_kvm_cloudinit_template_vmid }}
+  community.general.proxmox_vm_info:
+    api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+    api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+    api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+    vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+  register:
+    _proxmox_kvm_cloudinit_template_vm_info
+
+- name: Deletion block
+  when: _proxmox_kvm_cloudinit_template_vm_info.proxmox_vms | length
+  block:
+
+    - name: Stop with prejudice template kvm vmid-{{ proxmox_kvm_cloudinit_template_vmid }}
+      when: _prompt_confirmation.user_input | lower != 'n'
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+        api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+        api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+        vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+        force: true
+        state: stopped
+
+    - name: Remove template kvm vmid-{{ proxmox_kvm_cloudinit_template_vmid }}
+      when: _prompt_confirmation.user_input | lower != 'n'
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+        api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+        api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+        vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+        state: absent
+
+#################################################################################
+#                                                                               #
+#                       Creating the actual KVM Template                        #
+#                                                                               #
+#################################################################################
+
+- name: Create template vm
+  community.general.proxmox_kvm:
+    node: "{{ proxmox_kvm_cloudinit_template_node }}"
+    api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+    api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+    api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+    vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+    name: "{{ proxmox_kvm_cloudinit_template_name }}"
+    machine: q35
+    ostype: l26
+    bios: ovmf
+    cores: 1
+    sockets: 1
+    memory: 1024
+    agent: 'enabled=1'
+    boot: 'order=scsi0'
+    efidisk0:
+      storage: 'local-lvm'
+      format: 'raw'
+      efitype: 4m
+      pre_enrolled_keys: 1
+    serial:
+      serial0: 'socket'
+    vga: 'serial0'
+    scsihw: 'virtio-scsi-single'
+    scsi:
+      scsi0: "local-lvm:0,iothread=1,discard=on,import-from={{ proxmox_kvm_cloudinit_template_image_dest }},format=raw"
+    ide:
+      ide2: "local-lvm:cloudinit,format=raw"
+    net:
+      net0: 'virtio,bridge=vmbr0'
+    sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+    template: true
+
+#################################################################################
+#                                                                               #
+#       Doing the shennanigans that the GUI doesn't allow for cloud-init        #
+#                                                                               #
+#################################################################################
+
+# - name: Import disk
+#   community.general.proxmox_disk:
+#     api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+#     api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+#     api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+#     vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+#     storage: 'local-lvm:0'
+#     disk: 'unused0'
+#     import_from: "local:debian-12.6.0-amd64-DVD-1.iso"
+#     # media: 'disk'
+#     # iso_image: "local:{{ proxmox_kvm_cloudinit_template_image_modified_dest }}"
+#     state: present
+
+- name: Import disk through cmd line
+  ansible.builtin.command: "qm disk import {{ proxmox_kvm_cloudinit_template_vmid }} {{ proxmox_kvm_cloudinit_template_image_modified_dest }} local-lvm"
+  register: cmd_output
+  changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
+
+# - name: Update scsihw:virtio-scsi-pci
+#   community.general.proxmox_kvm:
+#     node: "{{ proxmox_kvm_cloudinit_template_node }}"
+#     api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+#     api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+#     api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+#     vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+#     name: "{{ proxmox_kvm_cloudinit_template_name }}"
+#     scsihw: 'virtio-scsi-pci'
+#     virtio:
+#       virtio0: "local-lvm:vm-{{ proxmox_kvm_cloudinit_template_vmid }}-disk-1"
+#     update: true
+
+- name: Setup disk for iso through cmd line
+  ansible.builtin.command: "qm set {{ proxmox_kvm_cloudinit_template_vmid }} --scsihw virtio-scsi-pci --virtio0 local-lvm:vm-{{ proxmox_kvm_cloudinit_template_vmid }}-disk-1,discard=on" # noqa: yaml[line-length]
+  register: cmd_output
+  changed_when: cmd_output.rc != 0
+
+- name: Update boot:order=virtio0
+  community.general.proxmox_kvm:
+    node: "{{ proxmox_kvm_cloudinit_template_node }}"
+    api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+    api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+    api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+    vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+    boot: order=virtio0
+    update: true
+
+# - name: Setup boot order with virtio0
+#   ansible.builtin.command: "qm set {{ proxmox_kvm_cloudinit_template_vmid }} --boot order=virtio0"
+#   register: cmd_output
+#   changed_when: cmd_output.rc != 0
+
+# - name: Update ide2:local-lvm:cloudinit
+#   community.general.proxmox_kvm:
+#     node: "{{ proxmox_kvm_cloudinit_template_node }}"
+#     api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+#     api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+#     api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+#     vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+#     ide:
+#       ide2: 'local-lvm:cloudinit'
+#     update: true
+
+- name: Setup ide2 storage through cmd line
+  ansible.builtin.command: "qm set {{ proxmox_kvm_cloudinit_template_vmid }} --ide2 local-lvm:cloudinit"
+  register: cmd_output
+  changed_when: cmd_output.rc != 0
+
+# - name: Start vm
+#   community.general.proxmox_kvm:
+#     api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+#     api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+#     api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+#     vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+#     state: started
+
+- name: Copy setupVars.conf with owner and permissions
+  ansible.builtin.copy:
+    src: files/cloudinit/debian-12-generic-amd64-docker.yaml
+    dest: /tmp/debian-12-generic-amd64-docker.yaml
+    mode: '0644'
+
+- name: Update ide2:local-lvm:cloudinit
+  community.general.proxmox_kvm:
+    node: "{{ proxmox_kvm_cloudinit_template_node }}"
+    api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+    api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+    api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+    vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+    cicustom: 'vendor=local-lvm:/tmp/debian-12-generic-amd64-docker.yaml'
+    tags: 'debian-template,debian-12,cloud-init,docker'
+    sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+    ipconfig:
+      ipconfig0: 'ip=dhcp'
+    update: true
+
+- name: Convert vm to template
+  community.general.proxmox_kvm:
+    node: "{{ proxmox_kvm_cloudinit_template_node }}"
+    api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+    api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+    api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+    vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+    state: template
+
+# What a fucking find son
+# https://gist.github.com/jkkor/e3b7e086c02a2b63ef5ace740db8850c
+# https://pve.proxmox.com/wiki/Cloud-Init_Support
+# https://github.com/UntouchedWagons/Ubuntu-CloudInit-Docs
+
+# default vm from GUI
+# cores 1
+# cpu x86-64-v2-AES
+# ide2 local:iso/debian-12.6.0-amd64-DVD-1.iso,media=cdrom
+# memory 2048
+# name docker01
+# net0 virtio=02:00:00:00:00:0e,bridge=vmbr0
+# nodename pve01
+# numa 0
+# onboot 1
+# ostype l26
+# scsihw virtio-scsi-single
+# sockets 1
+# virtio0 local-lvm:8,backup=0,iothread=on
+# vmid 220

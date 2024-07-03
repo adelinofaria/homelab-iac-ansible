@@ -14,7 +14,7 @@
   when: _proxmox_kvm_rm_container_vm_info.proxmox_vms | length
   block:
     - name: Stop with prejudice lxc vmid-{{ proxmox_lxc_rm_container_vmid }}
-      community.general.proxmox_kvm:
+      community.general.proxmox:
         api_host: "{{ proxmox_lxc_rm_container_api_host }}"
         api_user: "{{ proxmox_lxc_rm_container_api_user }}"
         api_password: "{{ proxmox_lxc_rm_container_api_password }}"
@@ -22,7 +22,7 @@
         force: true
         state: stopped
     - name: Remove lxc vmid-{{ proxmox_lxc_rm_container_vmid }}
-      community.general.proxmox_kvm:
+      community.general.proxmox:
         api_host: "{{ proxmox_lxc_rm_container_api_host }}"
         api_user: "{{ proxmox_lxc_rm_container_api_user }}"
         api_password: "{{ proxmox_lxc_rm_container_api_password }}"
