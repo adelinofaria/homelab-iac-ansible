@@ -1,17 +1,32 @@
 ---
 # file: main.yml
-- name: Infrastructure nuke playbook
+- name: Nuke hosts playbook
   hosts: pve
   vars_prompt:
-    - name: "prompt_confirmation"
+    - name: prompt_confirmation
       prompt: "This will nuke all (non-pve) hosts on the play batch ({{ ansible_play_batch | join(',') }}), are you sure (yN)?"
       private: false
   tasks:
-    - name: Nuking lxc infrastructure with soviet grade nuclear icbm
+    - name: Run per vmid
       when: prompt_confirmation | lower == 'y'
-      ansible.builtin.include_role:
-        name: proxmox_lxc_rm_container
-    - name: Nuking kvm infrastructure with soviet grade nuclear icbm
-      when: prompt_confirmation | lower == 'y'
-      ansible.builtin.include_role:
-        name: proxmox_kvm_rm_container
+      block:
+        - name: Remove lxc infrastructure
+          loop: "{{ groups['lxc'] }}"
+          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
+          ansible.builtin.include_role:
+            name: proxmox_lxc_rm_container
+          vars:
+            proxmox_lxc_rm_container_api_host: "{{ inventory_hostname }}"
+            proxmox_lxc_rm_container_api_user: "{{ api_user }}"
+            proxmox_lxc_rm_container_api_password: "{{ api_password }}"
+            proxmox_lxc_rm_container_vmid: "{{ hostvars[item].vmid }}"
+        - name: Remove kvm infrastructure
+          loop: "{{ groups['kvm'] }}"
+          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['kvm'])))
+          ansible.builtin.include_role:
+            name: proxmox_kvm_rm_container
+          vars:
+            proxmox_kvm_rm_container_api_host: "{{ inventory_hostname }}"
+            proxmox_kvm_rm_container_api_user: "{{ api_user }}"
+            proxmox_kvm_rm_container_api_password: "{{ api_password }}"
+            proxmox_kvm_rm_container_vmid: "{{ hostvars[item].vmid }}"

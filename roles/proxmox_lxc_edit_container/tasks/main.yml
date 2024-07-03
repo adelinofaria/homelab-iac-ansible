@@ -1,40 +1,37 @@
 ---
 # file: roles/proxmox_lxc_edit_container/tasks/main.yml
-- name: Update container configuration
+- name: Update config lxc vmid-{{ hostvars[item].vmid }}
   community.general.proxmox:
-    node: "{{ hostvars[item].node }}"
-    api_host: "{{ inventory_hostname }}"
-    api_user: "{{ api_user }}"
-    api_password: "{{ api_password }}"
-    vmid: "{{ hostvars[item].vmid }}"
-    hostname: "{{ item }}"
-    description: "{{ hostvars[item].description }}"
-    cores: "{{ hostvars[item].cores }}"
-    memory: "{{ hostvars[item].memory }}"
-    swap: "{{ hostvars[item].swap }}"
-    storage: "{{ hostvars[item].storage }}"
+    node: "{{ proxmox_lxc_edit_container_node }}"
+    api_host: "{{ proxmox_lxc_edit_container_api_host }}"
+    api_user: "{{ proxmox_lxc_edit_container_api_user }}"
+    api_password: "{{ proxmox_lxc_edit_container_api_password }}"
+    vmid: "{{ proxmox_lxc_edit_container_vmid }}"
+    hostname: "{{ proxmox_lxc_edit_container_hostname }}"
+    cores: "{{ proxmox_lxc_edit_container_cores }}"
+    memory: "{{ proxmox_lxc_edit_container_memory }}"
+    swap: "{{ proxmox_lxc_edit_container_swap }}"
+    storage: "{{ proxmox_lxc_edit_container_storage }}"
     netif:
       net0:
-        name: 'eth0'
-        hwaddr: "{{ hostvars[item].hwaddr }}"
-        gw: "{{ hostvars[item].gw }}"
-        ip: "{{ hostvars[item].ip }}"
-        gw6: "{{ hostvars[item].gw6 }}"
-        ip6: "{{ hostvars[item].ip6 }}"
-        bridge: 'vmbr0'
-    pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
-    timezone: host
-    onboot: true
+        name: "{{ proxmox_lxc_edit_container_netif_net0_name }}"
+        hwaddr: "{{ proxmox_lxc_edit_container_netif_net0_hwaddr }}"
+        ip: "{{ proxmox_lxc_edit_container_netif_net0_ip }}"
+        gw: "{{ proxmox_lxc_edit_container_netif_net0_gw }}"
+        ip6: "{{ proxmox_lxc_edit_container_netif_net0_ip6 }}"
+        gw6: "{{ proxmox_lxc_edit_container_netif_net0_gw6 }}"
+        bridge: "{{ proxmox_lxc_edit_container_netif_net0_bridge }}"
+    pubkey: "{{ proxmox_lxc_edit_container_pubkey }}"
+    timezone: "{{ proxmox_lxc_edit_container_timezone }}"
+    description: "{{ proxmox_lxc_edit_container_description }}"
+    onboot: "{{ proxmox_lxc_edit_container_onboot }}"
     update: true
-  when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
-  loop: "{{ groups['lxc'] }}"
 
-- name: Restart container(stopped or mounted container you can't restart)
+# Stopped or mounted container can't be restarted
+- name: Restart lxc vmid-{{ hostvars[item].vmid }}
   community.general.proxmox:
-    api_host: "{{ inventory_hostname }}"
-    api_user: "{{ api_user }}"
-    api_password: "{{ api_password }}"
-    vmid: "{{ hostvars[item].vmid }}"
+    api_host: "{{ proxmox_lxc_edit_container_api_host }}"
+    api_user: "{{ proxmox_lxc_edit_container_api_user }}"
+    api_password: "{{ proxmox_lxc_edit_container_api_password }}"
+    vmid: "{{ proxmox_lxc_edit_container_vmid }}"
     state: restarted
-  when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
-  loop: "{{ groups['lxc'] }}"
