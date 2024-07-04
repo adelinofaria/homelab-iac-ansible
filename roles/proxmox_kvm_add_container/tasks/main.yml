@@ -10,9 +10,8 @@
     proxmox_kvm_cloudinit_template_api_password: "{{ proxmox_kvm_add_container_api_password }}"
     proxmox_kvm_cloudinit_template_vmid: 666
     proxmox_kvm_cloudinit_template_name: debian-12-generic-amd64-template-docker
-    proxmox_kvm_cloudinit_template_image_remote_url: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
     proxmox_kvm_cloudinit_template_image_dest: /tmp/debian-12-generic-amd64.qcow2
-    proxmox_kvm_cloudinit_template_image_modified_dest: /tmp/debian-12-generic-amd64+docker.qcow2
+    proxmox_kvm_cloudinit_template_image_remote_url: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
     proxmox_kvm_cloudinit_template_image_checksum: sha512:c58d50f583d63af0243957ce1378536329e6ae8226f23413d50417464d44d809427eb89c4941685d1d408f1f44ff61746abb033f4180e30d4f70e7d974f3fe8d # noqa: yaml[line-length]
 
 #################################################################################
@@ -21,7 +20,8 @@
 #                                                                               #
 #################################################################################
 
-- name: Add kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+# First we clone
+- name: Clone kvm vmid-{{ proxmox_kvm_add_container_vmid }}
   community.general.proxmox_kvm:
     node: "{{ proxmox_kvm_add_container_node }}"
     api_host: "{{ proxmox_kvm_add_container_api_host }}"
@@ -31,34 +31,100 @@
     newid: "{{ proxmox_kvm_add_container_vmid }}"
     name: "{{ proxmox_kvm_add_container_hostname }}"
     clone: arbitrary_value
-    # cores: "{{ proxmox_kvm_add_container_cores }}"
-    # memory: "{{ proxmox_kvm_add_container_memory }}"
-    # storage: "{{ proxmox_kvm_add_container_storage }}" # local-lvm
-    # netif: # should be ipconfig
-    #   net0: # ipconfig0
-    #     name: "{{ proxmox_kvm_add_container_netif_net0_name }}"
-    #     hwaddr: "{{ proxmox_kvm_add_container_netif_net0_hwaddr }}"
-    #     ip: "{{ proxmox_kvm_add_container_netif_net0_ip }}"
-    #     gw: "{{ proxmox_kvm_add_container_netif_net0_gw }}"
-    #     ip6: "{{ proxmox_kvm_add_container_netif_net0_ip6 }}"
-    #     gw6: "{{ proxmox_kvm_add_container_netif_net0_gw6 }}"
-    #     bridge: "{{ proxmox_kvm_add_container_netif_net0_bridge }}"
-    description: "{{ proxmox_kvm_add_container_description }}"
-    onboot: "{{ proxmox_kvm_add_container_onboot }}"
     state: present
 
-- name: We're back on KVM ADD CONTAINER
-  ansible.builtin.debug:
-    msg: hi there we're gaming
-- name: Early fail
-  ansible.builtin.fail:
+# Then we configure specifics
+- name: Update values - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+  community.general.proxmox_kvm:
+    node: "{{ proxmox_kvm_add_container_node }}"
+    api_host: "{{ proxmox_kvm_add_container_api_host }}"
+    api_user: "{{ proxmox_kvm_add_container_api_user }}"
+    api_password: "{{ proxmox_kvm_add_container_api_password }}"
+    vmid: "{{ proxmox_kvm_add_container_vmid }}"
+    cores: "{{ proxmox_kvm_add_container_cores }}"
+    memory: "{{ proxmox_kvm_add_container_memory }}"
+    net:
+      net0: "virtio={{ proxmox_kvm_add_container_net_net0_hwaddr }},bridge=vmbr0"
+    ipconfig:
+      ipconfig0: "ip={{ proxmox_kvm_add_container_ipconfig_ipconfig0_ip }},gw={{ proxmox_kvm_add_container_ipconfig_ipconfig0_gw }},ip6={{ proxmox_kvm_add_container_ipconfig_ipconfig0_ip6 }},gw6={{ proxmox_kvm_add_container_ipconfig_ipconfig0_gw6 }}" # noqa: yaml[line-length]
+    sshkeys: "{{ proxmox_kvm_add_container_sshkeys }}"
+    description: "{{ proxmox_kvm_add_container_description }}"
+    onboot: "{{ proxmox_kvm_add_container_onboot }}"
+    update_unsafe: true
+    update: true
 
-# optional values
-#     ciuser: user
-#     cipassword: enter
-#     ipconfig:
-#       ipconfig0: 'ip=192.168.1.14/24,gw=192.168.1.1,ip6=fe80::e/10,gw6=fe80::ff:fe00:2201'
+#################################################################################
+#                                                                               #
+#                       Injecting custom cloud-init file                        #
+#                                                                               #
+#################################################################################
+
+- name: Ensure /var/lib/vz/snippets exists
+  ansible.builtin.file:
+    path: /var/lib/vz/snippets
+    state: directory
+    mode: '0644'
+
+- name: Copy network cloud-init file
+  ansible.builtin.copy:
+    src: files/cloudinit/debian-12-generic-amd64-docker.yaml
+    dest: /var/lib/vz/snippets/docker01-cicustom-extra-ci.yml
+    mode: '0644'
+
+# - name: Update cicustom values - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+#   community.general.proxmox_kvm:
+#     node: "{{ proxmox_kvm_add_container_node }}"
+#     api_host: "{{ proxmox_kvm_add_container_api_host }}"
+#     api_user: "{{ proxmox_kvm_add_container_api_user }}"
+#     api_password: "{{ proxmox_kvm_add_container_api_password }}"
+#     vmid: "{{ proxmox_kvm_add_container_vmid }}"
+#     cicustom: 'user=local:snippets/docker01-cicustom-extra-ci.yml'
+#     update: true
+
+- name: Start - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+  community.general.proxmox_kvm:
+    node: "{{ proxmox_kvm_add_container_node }}"
+    api_host: "{{ proxmox_kvm_add_container_api_host }}"
+    api_user: "{{ proxmox_kvm_add_container_api_user }}"
+    api_password: "{{ proxmox_kvm_add_container_api_password }}"
+    vmid: "{{ proxmox_kvm_add_container_vmid }}"
+    timeout: 300
+    state: started
+
+# Now we need to inject initial cloud-init scrits
+# for that we cat qm cloudinit 220
+
+
+#################################################################################
+#                                                                               #
+#                     Newly created kvm cloud-init config                       #
+#                                                                               #
+#################################################################################
+
+# shit we need to add for cloud-init
+# cicustom - Specify custom files to replace the automatically generated ones at start.
+
+# cloud-init with file experimental
+
+# - name: Copy setupVars.conf with owner and permissions
+#   ansible.builtin.copy:
+#     src: files/cloudinit/debian-12-generic-amd64-docker.yaml
+#     dest: /tmp/debian-12-generic-amd64-docker.yaml
+#     mode: '0644'
+
+# - name: Update ide2:local-lvm:cloudinit
+#   community.general.proxmox_kvm:
+#     node: "{{ proxmox_kvm_cloudinit_template_node }}"
+#     api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+#     api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+#     api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+#     vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+#     cicustom: 'vendor=local-lvm:/tmp/debian-12-generic-amd64-docker.yaml'
+#     tags: 'debian-template,debian-12,cloud-init,docker'
 #     sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+#     ipconfig:
+#       ipconfig0: 'ip=dhcp'
+#     update: true
 
 #################################################################################
 #                                                                               #
@@ -111,3 +177,8 @@
 #   ansible.builtin.service:
 #     name: qemu-guest-agent
 #     state: restarted
+
+# Research
+# https://gist.github.com/jkkor/e3b7e086c02a2b63ef5ace740db8850c
+# https://pve.proxmox.com/wiki/Cloud-Init_Support
+# https://github.com/UntouchedWagons/Ubuntu-CloudInit-Docs
