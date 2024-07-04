@@ -67,7 +67,7 @@
 
 - name: Copy network cloud-init file
   ansible.builtin.copy:
-    src: files/cloudinit/debian-12-generic-amd64-docker.yaml
+    src: files/cloudinit/debian-12-generic-amd64.yml
     dest: /var/lib/vz/snippets/vm-{{ proxmox_kvm_add_container_vmid }}-vendor-cicustom.yml
     mode: '0644'
 
@@ -92,17 +92,29 @@
     cicustom: "vendor=local:snippets/vm-{{ proxmox_kvm_add_container_vmid }}-vendor-cicustom.yml"
     update: true
 
-- name: Start - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
-  community.general.proxmox_kvm:
-    node: "{{ proxmox_kvm_add_container_node }}"
-    api_host: "{{ proxmox_kvm_add_container_api_host }}"
-    api_user: "{{ proxmox_kvm_add_container_api_user }}"
-    api_password: "{{ proxmox_kvm_add_container_api_password }}"
-    vmid: "{{ proxmox_kvm_add_container_vmid }}"
-    timeout: 300
-    state: started
+# - name: Start - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+#   community.general.proxmox_kvm:
+#     node: "{{ proxmox_kvm_add_container_node }}"
+#     api_host: "{{ proxmox_kvm_add_container_api_host }}"
+#     api_user: "{{ proxmox_kvm_add_container_api_user }}"
+#     api_password: "{{ proxmox_kvm_add_container_api_password }}"
+#     vmid: "{{ proxmox_kvm_add_container_vmid }}"
+#     timeout: 300
+#     state: started
+
+# Ansible module timesout when starting, so doing it through cli
+- name: Start using cmd line - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+  ansible.builtin.command: "qm start {{ proxmox_kvm_add_container_vmid }}"
+  register: cmd_output
+  changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
 
 # Research
 # https://gist.github.com/jkkor/e3b7e086c02a2b63ef5ace740db8850c
 # https://pve.proxmox.com/wiki/Cloud-Init_Support
 # https://github.com/UntouchedWagons/Ubuntu-CloudInit-Docs
+
+# cmd line qm docs
+# https://pve.proxmox.com/pve-docs/qm.1.html
+
+# cloud-init file reference
+# https://cloudinit.readthedocs.io/en/latest/reference/examples.html
