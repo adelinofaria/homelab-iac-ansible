@@ -68,18 +68,29 @@
 - name: Copy network cloud-init file
   ansible.builtin.copy:
     src: files/cloudinit/debian-12-generic-amd64-docker.yaml
-    dest: /var/lib/vz/snippets/docker01-cicustom-extra-ci.yml
+    dest: /var/lib/vz/snippets/vm-{{ proxmox_kvm_add_container_vmid }}-vendor-cicustom.yml
     mode: '0644'
 
-# - name: Update cicustom values - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
-#   community.general.proxmox_kvm:
-#     node: "{{ proxmox_kvm_add_container_node }}"
-#     api_host: "{{ proxmox_kvm_add_container_api_host }}"
-#     api_user: "{{ proxmox_kvm_add_container_api_user }}"
-#     api_password: "{{ proxmox_kvm_add_container_api_password }}"
-#     vmid: "{{ proxmox_kvm_add_container_vmid }}"
-#     cicustom: 'user=local:snippets/docker01-cicustom-extra-ci.yml'
-#     update: true
+# - name: Create user cicustom and send to snippets # noqa: no-changed-when
+#   ansible.builtin.shell:
+#     cmd: |
+#       qm cloudinit dump 220 user > /var/lib/vz/snippets/vm-{{ proxmox_kvm_add_container_vmid }}-user-cicustom.yml
+#       cat <<EOT >> /var/lib/vz/snippets/vm-{{ proxmox_kvm_add_container_vmid }}-user-cicustom.yml
+#       packages:
+#         - qemu-guest-agent
+#       runcmd:
+#         - systemctl start qemu-guest-agent
+#       EOT
+
+- name: Update cicustom values - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+  community.general.proxmox_kvm:
+    node: "{{ proxmox_kvm_add_container_node }}"
+    api_host: "{{ proxmox_kvm_add_container_api_host }}"
+    api_user: "{{ proxmox_kvm_add_container_api_user }}"
+    api_password: "{{ proxmox_kvm_add_container_api_password }}"
+    vmid: "{{ proxmox_kvm_add_container_vmid }}"
+    cicustom: "vendor=local:snippets/vm-{{ proxmox_kvm_add_container_vmid }}-vendor-cicustom.yml"
+    update: true
 
 - name: Start - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
   community.general.proxmox_kvm:
@@ -90,93 +101,6 @@
     vmid: "{{ proxmox_kvm_add_container_vmid }}"
     timeout: 300
     state: started
-
-# Now we need to inject initial cloud-init scrits
-# for that we cat qm cloudinit 220
-
-
-#################################################################################
-#                                                                               #
-#                     Newly created kvm cloud-init config                       #
-#                                                                               #
-#################################################################################
-
-# shit we need to add for cloud-init
-# cicustom - Specify custom files to replace the automatically generated ones at start.
-
-# cloud-init with file experimental
-
-# - name: Copy setupVars.conf with owner and permissions
-#   ansible.builtin.copy:
-#     src: files/cloudinit/debian-12-generic-amd64-docker.yaml
-#     dest: /tmp/debian-12-generic-amd64-docker.yaml
-#     mode: '0644'
-
-# - name: Update ide2:local-lvm:cloudinit
-#   community.general.proxmox_kvm:
-#     node: "{{ proxmox_kvm_cloudinit_template_node }}"
-#     api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
-#     api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
-#     api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
-#     vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
-#     cicustom: 'vendor=local-lvm:/tmp/debian-12-generic-amd64-docker.yaml'
-#     tags: 'debian-template,debian-12,cloud-init,docker'
-#     sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
-#     ipconfig:
-#       ipconfig0: 'ip=dhcp'
-#     update: true
-
-#################################################################################
-#                                                                               #
-#         This should be logic to run VM and do cloud-init shennans             #
-#                                                                               #
-#################################################################################
-
-# - name: Start docker01 VM
-#   community.general.proxmox_kvm:
-#     node: "{{ inventory_hostname }}"
-#     api_host: "{{ inventory_hostname }}"
-#     api_user: "{{ api_user }}"
-#     api_password: "{{ api_password }}"
-#     vmid: "{{ vm_result.vmid }}"
-#     state: started
-
-# # - name: Prompt for docker01 VM host
-# #   register: target_host_result
-# #   ansible.builtin.pause:
-# #     prompt: "Enter host/IP for docker01 VM"
-
-# - name: Add docker01 VM host
-#   ansible.builtin.add_host:
-#     name: docker01
-#     groups: kvm
-
-# # - name: Wait for virtual machines to finish rebooting
-# #   ansible.builtin.wait_for:
-# #     port: 22
-# #     host: docker01
-# #     search_regex: OpenSSH
-# #     delay: 10
-# #     timeout: 480
-# #     msg: Timeout or polling failed.
-
-# - name: Install qemu guest agent on docker01 VM
-#   delegate_to: docker01
-#   delegate_facts: true
-#   become: true
-#   ansible.builtin.package:
-#     name: qemu-guest-agent
-#     state: present
-#     update_cache: true
-#     install_recommends: false
-
-# - name: Restart qemu guest agent on docker01 VM
-#   delegate_to: docker01
-#   delegate_facts: true
-#   become: true
-#   ansible.builtin.service:
-#     name: qemu-guest-agent
-#     state: restarted
 
 # Research
 # https://gist.github.com/jkkor/e3b7e086c02a2b63ef5ace740db8850c
