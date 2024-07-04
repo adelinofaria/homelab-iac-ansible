@@ -15,12 +15,6 @@
     proxmox_kvm_cloudinit_template_image_modified_dest: /tmp/debian-12-generic-amd64+docker.qcow2
     proxmox_kvm_cloudinit_template_image_checksum: sha512:c58d50f583d63af0243957ce1378536329e6ae8226f23413d50417464d44d809427eb89c4941685d1d408f1f44ff61746abb033f4180e30d4f70e7d974f3fe8d # noqa: yaml[line-length]
 
-- name: We're back on KVM ADD CONTAINER
-  ansible.builtin.debug:
-    msg: hi there we're gaming
-- name: Early fail
-  ansible.builtin.fail:
-
 #################################################################################
 #                                                                               #
 #                     Now to the actual KVM VM creation                         #
@@ -37,23 +31,27 @@
     newid: "{{ proxmox_kvm_add_container_vmid }}"
     name: "{{ proxmox_kvm_add_container_hostname }}"
     clone: arbitrary_value
-    cores: "{{ proxmox_kvm_add_container_cores }}"
-    memory: "{{ proxmox_kvm_add_container_memory }}"
-    storage: "{{ proxmox_kvm_add_container_storage }}" # local-lvm
-    netif:
-      net0:
-        name: "{{ proxmox_kvm_add_container_netif_net0_name }}"
-        hwaddr: "{{ proxmox_kvm_add_container_netif_net0_hwaddr }}"
-        ip: "{{ proxmox_kvm_add_container_netif_net0_ip }}"
-        gw: "{{ proxmox_kvm_add_container_netif_net0_gw }}"
-        ip6: "{{ proxmox_kvm_add_container_netif_net0_ip6 }}"
-        gw6: "{{ proxmox_kvm_add_container_netif_net0_gw6 }}"
-        bridge: "{{ proxmox_kvm_add_container_netif_net0_bridge }}"
-    pubkey: "{{ proxmox_kvm_add_container_pubkey }}"
-    timezone: "{{ proxmox_kvm_add_container_timezone }}"
+    # cores: "{{ proxmox_kvm_add_container_cores }}"
+    # memory: "{{ proxmox_kvm_add_container_memory }}"
+    # storage: "{{ proxmox_kvm_add_container_storage }}" # local-lvm
+    # netif: # should be ipconfig
+    #   net0: # ipconfig0
+    #     name: "{{ proxmox_kvm_add_container_netif_net0_name }}"
+    #     hwaddr: "{{ proxmox_kvm_add_container_netif_net0_hwaddr }}"
+    #     ip: "{{ proxmox_kvm_add_container_netif_net0_ip }}"
+    #     gw: "{{ proxmox_kvm_add_container_netif_net0_gw }}"
+    #     ip6: "{{ proxmox_kvm_add_container_netif_net0_ip6 }}"
+    #     gw6: "{{ proxmox_kvm_add_container_netif_net0_gw6 }}"
+    #     bridge: "{{ proxmox_kvm_add_container_netif_net0_bridge }}"
     description: "{{ proxmox_kvm_add_container_description }}"
     onboot: "{{ proxmox_kvm_add_container_onboot }}"
     state: present
+
+- name: We're back on KVM ADD CONTAINER
+  ansible.builtin.debug:
+    msg: hi there we're gaming
+- name: Early fail
+  ansible.builtin.fail:
 
 # optional values
 #     ciuser: user
@@ -61,36 +59,6 @@
 #     ipconfig:
 #       ipconfig0: 'ip=192.168.1.14/24,gw=192.168.1.1,ip6=fe80::e/10,gw6=fe80::ff:fe00:2201'
 #     sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
-
-- name: Create new VM with minimal options
-  community.general.proxmox_kvm:
-    node: "{{ hostvars[item].node }}"
-    api_host: "{{ inventory_hostname }}"
-    api_user: "{{ api_user }}"
-    api_password: "{{ api_password }}"
-    ide:
-      ide0: 'local:iso/debian-12.6.0-amd64-DVD-1.iso,media=cdrom'
-    ostype: 'l26'
-    vmid: "{{ hostvars[item].vmid }}"
-    name: "{{ item }}"
-    description: "{{ hostvars[item].description }}" # ?
-    cores: "{{ hostvars[item].cores }}"
-    vcpus: 1
-    memory: "{{ hostvars[item].memory }}"
-    scsihw: 'virtio-scsi-single' # maybe change to virtio block
-    virtio:
-      virtio0: 'local-lvm:16,iothread=on'
-    net:
-      net0: "virtio={{ hostvars[item].hwaddr }},bridge=vmbr0"
-    ipconfig:
-      ipconfig0:
-        ip: "{{ hostvars[item].ip }}"
-        gw: "{{ hostvars[item].gw }}"
-        ip6: "{{ hostvars[item].ip6 }}"
-        gw6: "{{ hostvars[item].gw6 }}"
-    sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
-    onboot: true
-    state: present
 
 #################################################################################
 #                                                                               #

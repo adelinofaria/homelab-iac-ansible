@@ -48,7 +48,6 @@
   block:
 
     - name: Stop with prejudice template kvm vmid-{{ proxmox_kvm_cloudinit_template_vmid }}
-      when: _prompt_confirmation.user_input | lower != 'n'
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
         api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
@@ -58,7 +57,6 @@
         state: stopped
 
     - name: Remove template kvm vmid-{{ proxmox_kvm_cloudinit_template_vmid }}
-      when: _prompt_confirmation.user_input | lower != 'n'
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
         api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
@@ -83,28 +81,26 @@
     machine: q35
     ostype: l26
     bios: ovmf
+    cpu: x86-64-v2-AES
     cores: 1
     sockets: 1
     memory: 1024
     agent: 'enabled=1'
     boot: 'order=scsi0'
-    efidisk0:
-      storage: 'local-lvm'
-      format: 'raw'
-      efitype: 4m
-      pre_enrolled_keys: 1
     serial:
-      serial0: 'socket'
-    vga: 'serial0'
-    scsihw: 'virtio-scsi-single'
-    scsi:
-      scsi0: "local-lvm:0,iothread=1,discard=on,import-from={{ proxmox_kvm_cloudinit_template_image_dest }},format=raw"
+      serial0: socket
+    vga: serial0
+    # scsihw: virtio-scsi-pci # Setup in a following step
+    # scsi:
+    #   scsi0: 'local-lvm:8,backup=0,iothread=1'
     ide:
-      ide2: "local-lvm:cloudinit,format=raw"
+      ide2: "local-lvm:cloudinit"
     net:
       net0: 'virtio,bridge=vmbr0'
+    ipconfig:
+      ipconfig0: 'ip=dhcp'
     sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
-    template: true
+    # template: true # Seems like it shouldn't be a template yet
 
 #################################################################################
 #                                                                               #
@@ -126,7 +122,7 @@
 #     state: present
 
 - name: Import disk through cmd line
-  ansible.builtin.command: "qm disk import {{ proxmox_kvm_cloudinit_template_vmid }} {{ proxmox_kvm_cloudinit_template_image_modified_dest }} local-lvm"
+  ansible.builtin.command: "qm disk import {{ proxmox_kvm_cloudinit_template_vmid }} {{ proxmox_kvm_cloudinit_template_image_modified_dest }} local-lvm -format qcow2" # noqa: yaml[line-length]
   register: cmd_output
   changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
 
@@ -143,20 +139,32 @@
 #       virtio0: "local-lvm:vm-{{ proxmox_kvm_cloudinit_template_vmid }}-disk-1"
 #     update: true
 
-- name: Setup disk for iso through cmd line
-  ansible.builtin.command: "qm set {{ proxmox_kvm_cloudinit_template_vmid }} --scsihw virtio-scsi-pci --virtio0 local-lvm:vm-{{ proxmox_kvm_cloudinit_template_vmid }}-disk-1,discard=on" # noqa: yaml[line-length]
+- name: Attach disk to the vm using VirtIO SCSI
+  ansible.builtin.command: "qm set {{ proxmox_kvm_cloudinit_template_vmid }} --scsihw virtio-scsi-pci --virtio0 local-lvm:vm-{{ proxmox_kvm_cloudinit_template_vmid }}-disk-0" # noqa: yaml[line-length]
   register: cmd_output
   changed_when: cmd_output.rc != 0
 
-- name: Update boot:order=virtio0
-  community.general.proxmox_kvm:
-    node: "{{ proxmox_kvm_cloudinit_template_node }}"
-    api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
-    api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
-    api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
-    vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
-    boot: order=virtio0
-    update: true
+- name: The initial disk is only 2GB, thus we make it larger
+  ansible.builtin.command: "qm resize {{ proxmox_kvm_cloudinit_template_vmid }} scsi0 +32G"
+  register: cmd_output
+  changed_when: cmd_output.rc != 0
+
+- name: Check cloud-init config
+  ansible.builtin.command: "qm cloudinit dump {{ proxmox_kvm_cloudinit_template_vmid }} user"
+  register: cmd_output
+  changed_when: cmd_output.rc != 0
+
+# Boot order already set at start
+
+# - name: Update boot:order=virtio0
+#   community.general.proxmox_kvm:
+#     node: "{{ proxmox_kvm_cloudinit_template_node }}"
+#     api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+#     api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+#     api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+#     vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+#     boot: order=virtio0
+#     update: true
 
 # - name: Setup boot order with virtio0
 #   ansible.builtin.command: "qm set {{ proxmox_kvm_cloudinit_template_vmid }} --boot order=virtio0"
@@ -174,10 +182,12 @@
 #       ide2: 'local-lvm:cloudinit'
 #     update: true
 
-- name: Setup ide2 storage through cmd line
-  ansible.builtin.command: "qm set {{ proxmox_kvm_cloudinit_template_vmid }} --ide2 local-lvm:cloudinit"
-  register: cmd_output
-  changed_when: cmd_output.rc != 0
+# Initial setup seems to add this already
+
+# - name: Setup ide2 storage through cmd line
+#   ansible.builtin.command: "qm set {{ proxmox_kvm_cloudinit_template_vmid }} --ide2 local-lvm:cloudinit"
+#   register: cmd_output
+#   changed_when: cmd_output.rc != 0
 
 # - name: Start vm
 #   community.general.proxmox_kvm:
@@ -187,27 +197,27 @@
 #     vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
 #     state: started
 
-- name: Copy setupVars.conf with owner and permissions
-  ansible.builtin.copy:
-    src: files/cloudinit/debian-12-generic-amd64-docker.yaml
-    dest: /tmp/debian-12-generic-amd64-docker.yaml
-    mode: '0644'
+# - name: Copy setupVars.conf with owner and permissions
+#   ansible.builtin.copy:
+#     src: files/cloudinit/debian-12-generic-amd64-docker.yaml
+#     dest: /tmp/debian-12-generic-amd64-docker.yaml
+#     mode: '0644'
 
-- name: Update ide2:local-lvm:cloudinit
-  community.general.proxmox_kvm:
-    node: "{{ proxmox_kvm_cloudinit_template_node }}"
-    api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
-    api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
-    api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
-    vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
-    cicustom: 'vendor=local-lvm:/tmp/debian-12-generic-amd64-docker.yaml'
-    tags: 'debian-template,debian-12,cloud-init,docker'
-    sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
-    ipconfig:
-      ipconfig0: 'ip=dhcp'
-    update: true
+# - name: Update ide2:local-lvm:cloudinit
+#   community.general.proxmox_kvm:
+#     node: "{{ proxmox_kvm_cloudinit_template_node }}"
+#     api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"
+#     api_user: "{{ proxmox_kvm_cloudinit_template_api_user }}"
+#     api_password: "{{ proxmox_kvm_cloudinit_template_api_password }}"
+#     vmid: "{{ proxmox_kvm_cloudinit_template_vmid }}"
+#     cicustom: 'vendor=local-lvm:/tmp/debian-12-generic-amd64-docker.yaml'
+#     tags: 'debian-template,debian-12,cloud-init,docker'
+#     sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+#     ipconfig:
+#       ipconfig0: 'ip=dhcp'
+#     update: true
 
-- name: Convert vm to template
+- name: Convert to template
   community.general.proxmox_kvm:
     node: "{{ proxmox_kvm_cloudinit_template_node }}"
     api_host: "{{ proxmox_kvm_cloudinit_template_api_host }}"

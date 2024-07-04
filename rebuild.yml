@@ -88,7 +88,5 @@
             proxmox_kvm_add_container_netif_net0_ip6: "{{ hostvars[item].ip6 }}"
             proxmox_kvm_add_container_netif_net0_gw6: "{{ hostvars[item].gw6 }}"
             proxmox_kvm_add_container_netif_net0_bridge: vmbr0
-            proxmox_kvm_add_container_pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
-            proxmox_kvm_add_container_timezone: host
             proxmox_kvm_add_container_description: "{{ hostvars[item].description }}"
             proxmox_kvm_add_container_onboot: true
