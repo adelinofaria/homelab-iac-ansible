@@ -14,99 +14,95 @@
     proxmox_kvm_cloudinit_template_image_remote_url: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
     proxmox_kvm_cloudinit_template_image_checksum: sha512:c58d50f583d63af0243957ce1378536329e6ae8226f23413d50417464d44d809427eb89c4941685d1d408f1f44ff61746abb033f4180e30d4f70e7d974f3fe8d # noqa: yaml[line-length]
 
-#################################################################################
-#                                                                               #
-#                     Now to the actual KVM VM creation                         #
-#                                                                               #
-#################################################################################
-
-# First we clone
-- name: Clone kvm vmid-{{ proxmox_kvm_add_container_vmid }}
-  community.general.proxmox_kvm:
-    node: "{{ proxmox_kvm_add_container_node }}"
-    api_host: "{{ proxmox_kvm_add_container_api_host }}"
-    api_user: "{{ proxmox_kvm_add_container_api_user }}"
-    api_password: "{{ proxmox_kvm_add_container_api_password }}"
-    vmid: 666
-    newid: "{{ proxmox_kvm_add_container_vmid }}"
-    name: "{{ proxmox_kvm_add_container_hostname }}"
-    clone: arbitrary_value
-    state: present
-
-# Then we configure specifics
-- name: Update values - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
-  community.general.proxmox_kvm:
-    node: "{{ proxmox_kvm_add_container_node }}"
+- name: Retrieve kvm info - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+  community.general.proxmox_vm_info:
     api_host: "{{ proxmox_kvm_add_container_api_host }}"
     api_user: "{{ proxmox_kvm_add_container_api_user }}"
     api_password: "{{ proxmox_kvm_add_container_api_password }}"
     vmid: "{{ proxmox_kvm_add_container_vmid }}"
-    cores: "{{ proxmox_kvm_add_container_cores }}"
-    memory: "{{ proxmox_kvm_add_container_memory }}"
-    net:
-      net0: "virtio={{ proxmox_kvm_add_container_net_net0_hwaddr }},bridge=vmbr0"
-    ipconfig:
-      ipconfig0: "ip={{ proxmox_kvm_add_container_ipconfig_ipconfig0_ip }},gw={{ proxmox_kvm_add_container_ipconfig_ipconfig0_gw }},ip6={{ proxmox_kvm_add_container_ipconfig_ipconfig0_ip6 }},gw6={{ proxmox_kvm_add_container_ipconfig_ipconfig0_gw6 }}" # noqa: yaml[line-length]
-    sshkeys: "{{ proxmox_kvm_add_container_sshkeys }}"
-    description: "{{ proxmox_kvm_add_container_description }}"
-    onboot: "{{ proxmox_kvm_add_container_onboot }}"
-    update_unsafe: true
-    update: true
+  register:
+    _proxmox_kvm_add_container_vm_info
 
-#################################################################################
-#                                                                               #
-#                       Injecting custom cloud-init file                        #
-#                                                                               #
-#################################################################################
+- name: Creating kvm block
+  when: not (_proxmox_kvm_add_container_vm_info.proxmox_vms | length)
+  block:
 
-- name: Ensure /var/lib/vz/snippets exists
-  ansible.builtin.file:
-    path: /var/lib/vz/snippets
-    state: directory
-    mode: '0644'
+    # We start with a straight clone command
+    - name: Clone kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+      community.general.proxmox_kvm:
+        node: "{{ proxmox_kvm_add_container_node }}"
+        api_host: "{{ proxmox_kvm_add_container_api_host }}"
+        api_user: "{{ proxmox_kvm_add_container_api_user }}"
+        api_password: "{{ proxmox_kvm_add_container_api_password }}"
+        vmid: 666
+        newid: "{{ proxmox_kvm_add_container_vmid }}"
+        name: "{{ proxmox_kvm_add_container_hostname }}"
+        clone: arbitrary_value
+        state: present
 
-- name: Copy network cloud-init file
-  ansible.builtin.copy:
-    src: files/cloudinit/debian-12-generic-amd64.yml
-    dest: /var/lib/vz/snippets/vm-{{ proxmox_kvm_add_container_vmid }}-vendor-cicustom.yml
-    mode: '0644'
+    # Then we configure specifics
+    - name: Update values - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+      community.general.proxmox_kvm:
+        node: "{{ proxmox_kvm_add_container_node }}"
+        api_host: "{{ proxmox_kvm_add_container_api_host }}"
+        api_user: "{{ proxmox_kvm_add_container_api_user }}"
+        api_password: "{{ proxmox_kvm_add_container_api_password }}"
+        vmid: "{{ proxmox_kvm_add_container_vmid }}"
+        cores: "{{ proxmox_kvm_add_container_cores }}"
+        memory: "{{ proxmox_kvm_add_container_memory }}"
+        net:
+          net0: "virtio={{ proxmox_kvm_add_container_net_net0_hwaddr }},bridge=vmbr0"
+        ipconfig:
+          ipconfig0: "ip={{ proxmox_kvm_add_container_ipconfig_ipconfig0_ip }},gw={{ proxmox_kvm_add_container_ipconfig_ipconfig0_gw }},ip6={{ proxmox_kvm_add_container_ipconfig_ipconfig0_ip6 }},gw6={{ proxmox_kvm_add_container_ipconfig_ipconfig0_gw6 }}" # noqa: yaml[line-length]
+        sshkeys: "{{ proxmox_kvm_add_container_sshkeys }}"
+        description: "{{ proxmox_kvm_add_container_description }}"
+        onboot: "{{ proxmox_kvm_add_container_onboot }}"
+        update_unsafe: true
+        update: true
 
-# - name: Create user cicustom and send to snippets # noqa: no-changed-when
-#   ansible.builtin.shell:
-#     cmd: |
-#       qm cloudinit dump 220 user > /var/lib/vz/snippets/vm-{{ proxmox_kvm_add_container_vmid }}-user-cicustom.yml
-#       cat <<EOT >> /var/lib/vz/snippets/vm-{{ proxmox_kvm_add_container_vmid }}-user-cicustom.yml
-#       packages:
-#         - qemu-guest-agent
-#       runcmd:
-#         - systemctl start qemu-guest-agent
-#       EOT
+    #################################################################################
+    #                                                                               #
+    #                       Injecting custom cloud-init file                        #
+    #                                                                               #
+    #################################################################################
 
-- name: Update cicustom values - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
-  community.general.proxmox_kvm:
-    node: "{{ proxmox_kvm_add_container_node }}"
-    api_host: "{{ proxmox_kvm_add_container_api_host }}"
-    api_user: "{{ proxmox_kvm_add_container_api_user }}"
-    api_password: "{{ proxmox_kvm_add_container_api_password }}"
-    vmid: "{{ proxmox_kvm_add_container_vmid }}"
-    cicustom: "vendor=local:snippets/vm-{{ proxmox_kvm_add_container_vmid }}-vendor-cicustom.yml"
-    update: true
+    - name: Ensure /var/lib/vz/snippets exists
+      ansible.builtin.file:
+        path: /var/lib/vz/snippets
+        state: directory
+        mode: '0644'
 
-# - name: Start - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
-#   community.general.proxmox_kvm:
-#     node: "{{ proxmox_kvm_add_container_node }}"
-#     api_host: "{{ proxmox_kvm_add_container_api_host }}"
-#     api_user: "{{ proxmox_kvm_add_container_api_user }}"
-#     api_password: "{{ proxmox_kvm_add_container_api_password }}"
-#     vmid: "{{ proxmox_kvm_add_container_vmid }}"
-#     timeout: 300
-#     state: started
+    - name: Copy network cloud-init file
+      ansible.builtin.copy:
+        src: files/cloudinit/debian-12-generic-amd64.yml
+        dest: /var/lib/vz/snippets/vm-{{ proxmox_kvm_add_container_vmid }}-vendor-cicustom.yml
+        mode: '0644'
 
-# Ansible module timesout when starting, so doing it through cli
-- name: Start using cmd line - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
-  ansible.builtin.command: "qm start {{ proxmox_kvm_add_container_vmid }}"
-  register: cmd_output
-  changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
+    - name: Update cicustom values - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+      community.general.proxmox_kvm:
+        node: "{{ proxmox_kvm_add_container_node }}"
+        api_host: "{{ proxmox_kvm_add_container_api_host }}"
+        api_user: "{{ proxmox_kvm_add_container_api_user }}"
+        api_password: "{{ proxmox_kvm_add_container_api_password }}"
+        vmid: "{{ proxmox_kvm_add_container_vmid }}"
+        cicustom: "vendor=local:snippets/vm-{{ proxmox_kvm_add_container_vmid }}-vendor-cicustom.yml"
+        update: true
+
+    # - name: Start - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+    #   community.general.proxmox_kvm:
+    #     node: "{{ proxmox_kvm_add_container_node }}"
+    #     api_host: "{{ proxmox_kvm_add_container_api_host }}"
+    #     api_user: "{{ proxmox_kvm_add_container_api_user }}"
+    #     api_password: "{{ proxmox_kvm_add_container_api_password }}"
+    #     vmid: "{{ proxmox_kvm_add_container_vmid }}"
+    #     timeout: 300
+    #     state: started
+
+    # Ansible module timeouts when starting, so doing it through cli
+    - name: Start using cmd line - kvm vmid-{{ proxmox_kvm_add_container_vmid }}
+      ansible.builtin.command: "qm start {{ proxmox_kvm_add_container_vmid }}"
+      register: cmd_output
+      changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
 
 # Research
 # https://gist.github.com/jkkor/e3b7e086c02a2b63ef5ace740db8850c
