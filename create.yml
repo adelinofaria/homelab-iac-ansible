@@ -41,8 +41,19 @@
       ansible.builtin.include_role:
         name: proxmox_kvm_add_container
       vars:
+        proxmox_kvm_add_container_node: "{{ hostvars[item].node }}"
         proxmox_kvm_add_container_api_host: "{{ inventory_hostname }}"
         proxmox_kvm_add_container_api_user: "{{ api_user }}"
         proxmox_kvm_add_container_api_password: "{{ api_password }}"
         proxmox_kvm_add_container_vmid: "{{ hostvars[item].vmid }}"
-        # TODO
+        proxmox_kvm_add_container_hostname: "{{ item }}"
+        proxmox_kvm_add_container_cores: "{{ hostvars[item].cores }}"
+        proxmox_kvm_add_container_memory: "{{ hostvars[item].memory }}"
+        proxmox_kvm_add_container_net_net0_hwaddr: "{{ hostvars[item].hwaddr }}"
+        proxmox_kvm_add_container_ipconfig_ipconfig0_ip: "{{ hostvars[item].ip }}"
+        proxmox_kvm_add_container_ipconfig_ipconfig0_gw: "{{ hostvars[item].gw }}"
+        proxmox_kvm_add_container_ipconfig_ipconfig0_ip6: "{{ hostvars[item].ip6 }}"
+        proxmox_kvm_add_container_ipconfig_ipconfig0_gw6: "{{ hostvars[item].gw6 }}"
+        proxmox_kvm_add_container_sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+        proxmox_kvm_add_container_description: "{{ hostvars[item].description }}"
+        proxmox_kvm_add_container_onboot: true
