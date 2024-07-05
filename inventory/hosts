@@ -5,8 +5,7 @@ pve01
 [lxc]
 pihole01 # -> dns01
 unbound01 # -> updns01
-# ddns01
-# webserver01
+webserver01
 # logs01
 # homeassistant01
 # plex01
@@ -16,18 +15,22 @@ unbound01 # -> updns01
 docker01
 
 [docker]
-ansible
+docker01
+
+[docker_container]
+ddns01
+
+# Operating Systems
+
+[alpine]
+ddns01
 
 [debian]
 pve01
 pihole01
 unbound01
-# ddns01
-# webserver01
+webserver01
 docker01
 # homeassistant01
 # plex01
 # jenkins01
-
-[alipne]
-ansible

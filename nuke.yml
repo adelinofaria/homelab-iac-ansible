@@ -1,7 +1,7 @@
 ---
 # file: main.yml
 - name: Nuke hosts playbook
-  hosts: pve
+  hosts: all
   vars_prompt:
     - name: prompt_confirmation
       prompt: "This will nuke all (non-pve) hosts on the play batch ({{ ansible_play_batch | join(',') }}), are you sure (yN)?"
@@ -12,7 +12,9 @@
       block:
         - name: Remove lxc infrastructure
           loop: "{{ groups['lxc'] }}"
-          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
+          when:
+            - inventory_hostname in groups['pve']
+            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['lxc'])))
           ansible.builtin.include_role:
             name: proxmox_lxc_rm_container
           vars:
@@ -22,7 +24,9 @@
             proxmox_lxc_rm_container_vmid: "{{ hostvars[item].vmid }}"
         - name: Remove kvm infrastructure
           loop: "{{ groups['kvm'] }}"
-          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['kvm'])))
+          when:
+            - inventory_hostname in groups['pve']
+            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['kvm'])))
           ansible.builtin.include_role:
             name: proxmox_kvm_rm_container
           vars:

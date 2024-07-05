@@ -1,0 +1,130 @@
+---
+# file: tasks/webserver01.yml
+- name: Running webserver01.yml playbook
+  when: ansible_hostname == 'webserver01'
+  block:
+    - name: Import role docker
+      ansible.builtin.include_role:
+        name: docker
+
+    # File directory config
+
+    - name: Create folders
+      loop: ['./appdata', './appdata/sites', 'appdata/sites/blog.adelinofaria.me']
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+        state: directory
+
+    - name: Copy docker-compose.yml file
+      ansible.builtin.copy:
+        src: files/docker-swag/docker-compose.yml
+        dest: appdata/docker-compose.yml
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+    # Prepare websites
+
+    - name: Add a setting to ~/.gitconfig
+      community.general.git_config:
+        name: safe.directory
+        scope: global
+        value: '*'
+
+    - name: Clone adelinofaria.me
+      ansible.builtin.git:
+        repo: https://github.com/adelinofaria/adelinofaria.github.io
+        dest: appdata/sites/adelinofaria.me
+        accept_newhostkey: true
+        single_branch: true
+        version: master
+
+    - name: Clone adelinofaria.me
+      ansible.builtin.git:
+        repo: https://github.com/adelinofaria/adelinofaria.github.io
+        dest: appdata/sites/error.adelinofaria.me
+        accept_newhostkey: true
+        single_branch: true
+        version: master
+
+    - name: Download wordpress
+      ansible.builtin.unarchive:
+        src: https://wordpress.org/latest.tar.gz
+        dest: appdata/sites/blog.adelinofaria.me
+        remote_src: true
+
+    # Starting container
+
+    - name: Compose up
+      community.docker.docker_compose_v2:
+        project_src: appdata
+        wait: true
+      register: output
+
+    - name: Add docker container
+      ansible.builtin.debug:
+        msg:
+          - "{{ output }}"
+
+    - name: Docker needs a couple of seconds to mount volumes for further config
+      ansible.builtin.pause:
+        seconds: 2
+
+    # Configuring container
+
+    - name: Comment out the dns_cloudflare_email entry at dns-conf/cloudflare.ini
+      ansible.builtin.replace:
+        path: appdata/swag/dns-conf/cloudflare.ini
+        regexp: '^dns_cloudflare_email(\s+.*)?$'
+        replace: '#\1'
+      notify:
+        - Restart container
+
+    - name: Comment out the dns_cloudflare_api_key entry at dns-conf/cloudflare.ini
+      ansible.builtin.replace:
+        path: appdata/swag/dns-conf/cloudflare.ini
+        regexp: '^dns_cloudflare_api_key(\s+.*)?$'
+        replace: '#\1'
+      notify:
+        - Restart container
+
+    - name: Uncomment and fill the dns_cloudflare_api_token entry at dns-conf/cloudflare.ini
+      ansible.builtin.replace:
+        path: appdata/swag/dns-conf/cloudflare.ini
+        regexp: '^#\s*dns_cloudflare_api_token\s*=\s*.*$'
+        replace: "dns_cloudflare_api_token = {{ cloudflare_api_token }}"
+      vars:
+        cloudflare_api_token: "{{ vault_cf_api_token }}"
+      notify:
+        - Restart container
+
+    - name: Fix folder for root website (adelinofaria.me) at nginx/site-confs/default.conf
+      ansible.builtin.replace:
+        path: appdata/swag/nginx/site-confs/default.conf
+        regexp: '^(\s*root \/config)\/.*;$'
+        replace: '\1/sites/adelinofaria.me;'
+      notify:
+        - Restart container
+
+    - name: Copy nginx subdomain site-config - blog.adelinofaria.me.conf
+      ansible.builtin.copy:
+        src: files/docker-swag/blog.adelinofaria.me.conf
+        dest: appdata/swag/nginx/site-confs/blog.adelinofaria.me.conf
+        group: 1000
+        owner: 1000
+        mode: '0664'
+      notify:
+        - Restart container
+
+    - name: Copy nginx subdomain site-config - error.adelinofaria.me.conf
+      ansible.builtin.copy:
+        src: files/docker-swag/error.adelinofaria.me.conf
+        dest: appdata/swag/nginx/site-confs/error.adelinofaria.me.conf
+        group: 1000
+        owner: 1000
+        mode: '0664'
+      notify:
+        - Restart container

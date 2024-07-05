@@ -13,7 +13,9 @@
 
         - name: Edit lxc infrastructure
           loop: "{{ groups['lxc'] }}"
-          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
+          when:
+            - inventory_hostname in groups['pve']
+            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['lxc'])))
           ansible.builtin.include_role:
             name: proxmox_lxc_edit_container
           vars:
@@ -36,12 +38,15 @@
             proxmox_lxc_edit_container_netif_net0_bridge: vmbr0
             proxmox_lxc_edit_container_pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
             proxmox_lxc_edit_container_timezone: host
+            proxmox_lxc_edit_container_features: "{{ hostvars[item].features }}"
             proxmox_lxc_edit_container_description: "{{ hostvars[item].description }}"
             proxmox_lxc_edit_container_onboot: true
 
         - name: Edit kvm infrastructure
           loop: "{{ groups['kvm'] }}"
-          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['kvm'])))
+          when:
+            - inventory_hostname in groups['pve']
+            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['kvm'])))
           ansible.builtin.include_role:
             name: proxmox_kvm_edit_container
           vars:
@@ -51,3 +56,9 @@
             proxmox_kvm_edit_container_api_password: "{{ api_password }}"
             proxmox_kvm_edit_container_vmid: "{{ hostvars[item].vmid }}"
             # TODO
+
+- name: Specific host playbook
+  hosts: lxc,kvm
+  tasks:
+    - name: Run host specific task file
+      ansible.builtin.include_tasks: "tasks/{{ inventory_hostname }}.yml"

@@ -1,0 +1,30 @@
+---
+# file: roles/docker_add_container/tasks/main.yml
+
+- name: Create project folder
+  ansible.builtin.file:
+    path: ~/cloudflare-ddns
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+    state: directory
+
+- name: Copy docker-compose.yml file
+  ansible.builtin.template:
+    src: files/cloudflare-ddns/docker-compose.yml.j2
+    dest: ~/cloudflare-ddns/docker-compose.yml
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  vars:
+    cloudflare_api_token: "{{ vault_cf_api_token }}"
+
+- name: Compose up
+  community.docker.docker_compose_v2:
+    project_src: ~/cloudflare-ddns
+  register: output
+
+- name: Add docker container
+  ansible.builtin.debug:
+    msg:
+      - "{{ output }}"

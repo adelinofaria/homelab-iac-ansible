@@ -1,43 +1,8 @@
 ---
 # file: test.yml
 - name: Test playbook
-  hosts: docker01
+  hosts: all
   tasks:
     # - name: Testing debug
     #   ansible.builtin.debug:
-    #     msg: "{{ ansible_hostname }}"
-    #   when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
-    #   loop: "{{ groups['lxc'] }}"
-
-    - name: Install qemu guest agent on docker01 VM
-      become: true
-      ansible.builtin.package:
-        name: qemu-guest-agent
-        state: present
-        update_cache: true
-        install_recommends: false
-
-    - name: Restart qemu guest agent on docker01 VM
-      become: true
-      ansible.builtin.service:
-        name: qemu-guest-agent
-        state: restarted
-
-
-    # - name: Install qemu guest agent on docker01 VM
-    #   delegate_to: docker01
-    #   delegate_facts: true
-    #   become: true
-    #   ansible.builtin.package:
-    #     name: qemu-guest-agent
-    #     state: present
-    #     update_cache: true
-    #     install_recommends: false
-
-    # - name: Restart qemu guest agent on docker01 VM
-    #   delegate_to: docker01
-    #   delegate_facts: true
-    #   become: true
-    #   ansible.builtin.service:
-    #     name: qemu-guest-agent
-    #     state: restarted
+    #     msg: hihi

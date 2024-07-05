@@ -13,7 +13,9 @@
 
         - name: Remove lxc infrastructure
           loop: "{{ groups['lxc'] }}"
-          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
+          when:
+            - inventory_hostname in groups['pve']
+            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['lxc'])))
           ansible.builtin.include_role:
             name: proxmox_lxc_rm_container
           vars:
@@ -24,7 +26,9 @@
 
         - name: Create lxc infrastructure
           loop: "{{ groups['lxc'] }}"
-          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
+          when:
+            - inventory_hostname in groups['pve']
+            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['lxc'])))
           ansible.builtin.include_role:
             name: proxmox_lxc_add_container
           vars:
@@ -48,6 +52,7 @@
             proxmox_lxc_add_container_pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
             proxmox_lxc_add_container_ostemplate: "{{ hostvars[item].ostemplate }}"
             proxmox_lxc_add_container_timezone: host
+            proxmox_lxc_add_container_features: "{{ hostvars[item].features }}"
             proxmox_lxc_add_container_description: "{{ hostvars[item].description }}"
             proxmox_lxc_add_container_onboot: true
             proxmox_lxc_add_container_template_storage: "{{ hostvars[item].template_storage }}"
@@ -56,7 +61,9 @@
 
         - name: Remove kvm infrastructure
           loop: "{{ groups['kvm'] }}"
-          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['kvm'])))
+          when:
+            - inventory_hostname in groups['pve']
+            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['kvm'])))
           ansible.builtin.include_role:
             name: proxmox_kvm_rm_container
           vars:
@@ -67,7 +74,9 @@
 
         - name: Create kvm infrastructure
           loop: "{{ groups['kvm'] }}"
-          when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['kvm'])))
+          when:
+            - inventory_hostname in groups['pve']
+            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['kvm'])))
           ansible.builtin.include_role:
             name: proxmox_kvm_add_container
           vars:
@@ -87,3 +96,34 @@
             proxmox_kvm_add_container_sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
             proxmox_kvm_add_container_description: "{{ hostvars[item].description }}"
             proxmox_kvm_add_container_onboot: true
+
+        - name: Remove docker infrastructure
+          loop: "{{ groups['docker_container'] }}"
+          when:
+            - inventory_hostname in groups['docker']
+            - (inventory_hostname == hostvars[item].docker_host) and (item in (ansible_limit | default(groups['docker_container'])))
+          ansible.builtin.include_role:
+            name: docker_rm_container
+          vars:
+            docker_rm_container_docker_host: "{{ hostvars[item].docker_host }}"
+
+        - name: Create docker infrastructure
+          loop: "{{ groups['docker_container'] }}"
+          when:
+            - inventory_hostname in groups['docker']
+            - (inventory_hostname == hostvars[item].docker_host) and (item in (ansible_limit | default(groups['docker_container'])))
+          ansible.builtin.include_role:
+            name: docker_add_container
+          vars:
+            docker_add_container_docker_host: "{{ hostvars[item].docker_host }}"
+            docker_add_container_net_net0_hwaddr: "{{ hostvars[item].hwaddr }}"
+            docker_add_container_ipconfig_ipconfig0_ip: "{{ hostvars[item].ip }}"
+            docker_add_container_ipconfig_ipconfig0_gw: "{{ hostvars[item].gw }}"
+            docker_add_container_ipconfig_ipconfig0_ip6: "{{ hostvars[item].ip6 }}"
+            docker_add_container_ipconfig_ipconfig0_gw6: "{{ hostvars[item].gw6 }}"
+
+- name: Specific host playbook
+  hosts: lxc,kvm
+  tasks:
+    - name: Run host specific task file
+      ansible.builtin.include_tasks: "tasks/{{ inventory_hostname }}.yml"

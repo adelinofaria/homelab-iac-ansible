@@ -1,0 +1,13 @@
+---
+# file: roles/docker_rm_container/tasks/main.yml
+
+- name: Compose down
+  community.docker.docker_compose_v2:
+    project_src: ~/cloudflare-ddns
+    state: stopped
+  register: output
+
+- name: Remove docker container
+  ansible.builtin.debug:
+    msg:
+      - "{{ output }}"

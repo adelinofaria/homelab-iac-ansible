@@ -5,7 +5,9 @@
   tasks:
     - name: Create lxc infrastructure
       loop: "{{ groups['lxc'] }}"
-      when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['lxc'])))
+      when:
+        - inventory_hostname in groups['pve']
+        - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['lxc'])))
       ansible.builtin.include_role:
         name: proxmox_lxc_add_container
       vars:
@@ -29,6 +31,7 @@
         proxmox_lxc_add_container_pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
         proxmox_lxc_add_container_ostemplate: "{{ hostvars[item].ostemplate }}"
         proxmox_lxc_add_container_timezone: host
+        proxmox_lxc_add_container_features: "{{ hostvars[item].features }}"
         proxmox_lxc_add_container_description: "{{ hostvars[item].description }}"
         proxmox_lxc_add_container_onboot: true
         proxmox_lxc_add_container_template_storage: "{{ hostvars[item].template_storage }}"
@@ -37,7 +40,9 @@
 
     - name: Create kvm infrastructure
       loop: "{{ groups['kvm'] }}"
-      when: (hostvars[item].node == ansible_hostname) and (item in (ansible_limit | default(groups['kvm'])))
+      when:
+        - inventory_hostname in groups['pve']
+        - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['kvm'])))
       ansible.builtin.include_role:
         name: proxmox_kvm_add_container
       vars:
@@ -57,3 +62,9 @@
         proxmox_kvm_add_container_sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
         proxmox_kvm_add_container_description: "{{ hostvars[item].description }}"
         proxmox_kvm_add_container_onboot: true
+
+- name: Specific host playbook
+  hosts: lxc,kvm
+  tasks:
+    - name: Run host specific task file
+      ansible.builtin.include_tasks: "tasks/{{ inventory_hostname }}.yml"

@@ -2,8 +2,6 @@
 # file: main.yml
 - name: Running main.yml playbook
   hosts: all
-- name: Import pve01.yml playbook
-  ansible.builtin.import_playbook: pve01.yml
 - name: Import lxc.yml playbook
   ansible.builtin.import_playbook: lxc.yml
 - name: Import pihole01.yml playbook

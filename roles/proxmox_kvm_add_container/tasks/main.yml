@@ -74,7 +74,7 @@
 
     - name: Copy network cloud-init file
       ansible.builtin.copy:
-        src: files/cloudinit/debian-12-generic-amd64.yml
+        src: "files/cloudinit/cloudinit-vendor-{{ proxmox_kvm_add_container_hostname }}.yml"
         dest: /var/lib/vz/snippets/vm-{{ proxmox_kvm_add_container_vmid }}-vendor-cicustom.yml
         mode: '0644'
 
@@ -105,6 +105,7 @@
       changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
 
 # Research
+# https://gist.github.com/chriswayg/b6421dcc69cb3b7e41f2998f1150e1df
 # https://gist.github.com/jkkor/e3b7e086c02a2b63ef5ace740db8850c
 # https://pve.proxmox.com/wiki/Cloud-Init_Support
 # https://github.com/UntouchedWagons/Ubuntu-CloudInit-Docs

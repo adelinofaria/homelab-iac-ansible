@@ -1,0 +1,7 @@
+---
+# file: roles/docker/handlers/main.yml
+
+- name: Restart container
+  community.docker.docker_compose_v2:
+    project_src: appdata
+    state: restarted

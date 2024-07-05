@@ -13,16 +13,10 @@
     swap: "{{ proxmox_lxc_edit_container_swap }}"
     storage: "{{ proxmox_lxc_edit_container_storage }}"
     netif:
-      net0:
-        name: "{{ proxmox_lxc_edit_container_netif_net0_name }}"
-        hwaddr: "{{ proxmox_lxc_edit_container_netif_net0_hwaddr }}"
-        ip: "{{ proxmox_lxc_edit_container_netif_net0_ip }}"
-        gw: "{{ proxmox_lxc_edit_container_netif_net0_gw }}"
-        ip6: "{{ proxmox_lxc_edit_container_netif_net0_ip6 }}"
-        gw6: "{{ proxmox_lxc_edit_container_netif_net0_gw6 }}"
-        bridge: "{{ proxmox_lxc_edit_container_netif_net0_bridge }}"
+      net0: "name={{ proxmox_lxc_edit_container_netif_net0_name }},hwaddr={{ proxmox_lxc_edit_container_netif_net0_hwaddr }},ip={{ proxmox_lxc_edit_container_netif_net0_ip }},gw={{ proxmox_lxc_edit_container_netif_net0_gw }},ip6={{ proxmox_lxc_edit_container_netif_net0_ip6 }},gw6={{ proxmox_lxc_edit_container_netif_net0_gw6 }},bridge={{ proxmox_lxc_edit_container_netif_net0_bridge }}" # noqa: yaml[line-length]
     pubkey: "{{ proxmox_lxc_edit_container_pubkey }}"
     timezone: "{{ proxmox_lxc_edit_container_timezone }}"
+    features: "{{ proxmox_lxc_edit_container_features }}"
     description: "{{ proxmox_lxc_edit_container_description }}"
     onboot: "{{ proxmox_lxc_edit_container_onboot }}"
     update: true

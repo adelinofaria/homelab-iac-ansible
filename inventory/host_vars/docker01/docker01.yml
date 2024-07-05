@@ -1,6 +1,7 @@
 ---
 # file: inventory/host_vars/docker01.yml
 ansible_host: 192.168.1.14
+ansible_user: debian
 node: pve01
 vmid: 220
 cores: 1
