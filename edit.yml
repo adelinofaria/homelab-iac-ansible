@@ -15,7 +15,8 @@
           loop: "{{ groups['lxc'] }}"
           when:
             - inventory_hostname in groups['pve']
-            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['lxc'])))
+            - inventory_hostname == hostvars[item].node
+            - ('lxc' in ansible_limit) or (item in (ansible_limit | default(groups['lxc'])))
           ansible.builtin.include_role:
             name: proxmox_lxc_edit_container
           vars:
@@ -36,9 +37,9 @@
             proxmox_lxc_edit_container_netif_net0_ip6: "{{ hostvars[item].ip6 }}"
             proxmox_lxc_edit_container_netif_net0_gw6: "{{ hostvars[item].gw6 }}"
             proxmox_lxc_edit_container_netif_net0_bridge: vmbr0
-            proxmox_lxc_edit_container_pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
             proxmox_lxc_edit_container_timezone: host
-            proxmox_lxc_edit_container_features: "{{ hostvars[item].features }}"
+            proxmox_lxc_edit_container_pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+            proxmox_lxc_edit_container_features: "{{ hostvars[item].features | default(omit) }}"
             proxmox_lxc_edit_container_description: "{{ hostvars[item].description }}"
             proxmox_lxc_edit_container_onboot: true
 
@@ -46,7 +47,8 @@
           loop: "{{ groups['kvm'] }}"
           when:
             - inventory_hostname in groups['pve']
-            - (inventory_hostname == hostvars[item].node) and (item in (ansible_limit | default(groups['kvm'])))
+            - inventory_hostname == hostvars[item].node
+            - ('kvm' in ansible_limit) or (item in (ansible_limit | default(groups['kvm'])))
           ansible.builtin.include_role:
             name: proxmox_kvm_edit_container
           vars:

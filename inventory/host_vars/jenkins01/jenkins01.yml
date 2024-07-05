@@ -12,9 +12,10 @@ ip: 192.168.1.26/24
 gw: 192.168.1.1
 ip6: fe80::1a/10
 gw6: fe80::ff:fe00:2201
+features:
+description: Jenkins LXC - an open source automation server which enables developers around the world to reliably build, test, and deploy their software.
+ostemplate: local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst
 template_storage: local
 template_content_type: vztmpl
 template: debian-12-standard_12.2-1_amd64.tar.zst
-ostemplate: local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst
-description: Jenkins LXC - an open source automation server which enables developers around the world to reliably build, test, and deploy their software.
 notes: n/a
