@@ -1,6 +1,0 @@
----
-# file: lxc.yml
-- name: Running lxc.yml playbook
-  hosts: lxc
-  roles:
-    - lxc

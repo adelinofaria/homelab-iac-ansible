@@ -1,12 +1,20 @@
 ---
-# file: unbound01.yml
+# file: tasks/unbound01.yml
 - name: Running unbound01.yml playbook
-  hosts: unbound01
-  tasks:
+  when: ansible_hostname == 'unbound01'
+  block:
+    - name: Import role
+      ansible.builtin.include_role:
+        name: lxc
+
+    # Install dependencies
+
     - name: Ensure unbound is present
       ansible.builtin.apt:
         name: unbound
         state: present
+
+    # Config files
 
     - name: Download root.hints
       ansible.builtin.get_url:
@@ -14,6 +22,7 @@
         dest: /var/lib/unbound/root.hints
         mode: '0644'
       notify: Restart unbound
+      register: roothints_file
 
     - name: Copy unbound01.conf with owner and permissions
       ansible.builtin.copy:
@@ -23,6 +32,7 @@
         group: root
         mode: '0644'
       notify: Restart unbound
+      register: unbound01conf_file
 
     - name: Run CRON job to update root.hints every 3 months on the first day at 06:30.
       ansible.builtin.cron:
@@ -33,8 +43,8 @@
         minute: "00"
         job: "wget https://www.internic.net/domain/named.root -qO- | tee /var/lib/unbound/root.hints"
 
-  handlers:
     - name: Restart unbound
       ansible.builtin.systemd_service:
         name: unbound
         state: restarted
+      when: roothints_file.changed and unbound01conf_file.changed

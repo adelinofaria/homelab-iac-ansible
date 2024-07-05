@@ -3,6 +3,9 @@
 - name: Running webserver01.yml playbook
   when: ansible_hostname == 'webserver01'
   block:
+    - name: Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
     - name: Import role docker
       ansible.builtin.include_role:
         name: docker
@@ -62,12 +65,6 @@
       community.docker.docker_compose_v2:
         project_src: appdata
         wait: true
-      register: output
-
-    - name: Add docker container
-      ansible.builtin.debug:
-        msg:
-          - "{{ output }}"
 
     - name: Docker needs a couple of seconds to mount volumes for further config
       ansible.builtin.pause:
