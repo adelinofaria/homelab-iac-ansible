@@ -13,11 +13,9 @@
     # File directory config
 
     - name: Create folders
-      loop: ['./appdata', './appdata/sites', 'appdata/sites/blog.adelinofaria.me']
+      loop: ['./appdata', './appdata/sites', 'appdata/sites/blog.adelinofaria.me', 'appdata/sites/status.adelinofaria.me']
       ansible.builtin.file:
         path: "{{ item }}"
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
         mode: '0755'
         state: directory
 
@@ -25,8 +23,6 @@
       ansible.builtin.copy:
         src: files/docker-swag/docker-compose.yml
         dest: appdata/docker-compose.yml
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
         mode: '0644'
 
     # Prepare websites
@@ -58,6 +54,12 @@
         src: https://wordpress.org/latest.tar.gz
         dest: appdata/sites/blog.adelinofaria.me
         remote_src: true
+
+    - name: Copy status
+      ansible.builtin.copy:
+        src: reports/report.html
+        dest: appdata/sites/blog.adelinofaria.me/index.html
+        mode: '0644'
 
     # Starting container
 
@@ -110,8 +112,6 @@
       ansible.builtin.copy:
         src: files/docker-swag/blog.adelinofaria.me.conf
         dest: appdata/swag/nginx/site-confs/blog.adelinofaria.me.conf
-        group: 1000
-        owner: 1000
         mode: '0664'
       notify:
         - Restart container
@@ -120,8 +120,14 @@
       ansible.builtin.copy:
         src: files/docker-swag/error.adelinofaria.me.conf
         dest: appdata/swag/nginx/site-confs/error.adelinofaria.me.conf
-        group: 1000
-        owner: 1000
+        mode: '0664'
+      notify:
+        - Restart container
+
+    - name: Copy nginx subdomain site-config - status.adelinofaria.me.conf
+      ansible.builtin.copy:
+        src: files/docker-swag/status.adelinofaria.me.conf
+        dest: appdata/swag/nginx/site-confs/status.adelinofaria.me.conf
         mode: '0664'
       notify:
         - Restart container
