@@ -58,7 +58,7 @@
     - name: Copy status
       ansible.builtin.copy:
         src: reports/report.html
-        dest: appdata/sites/blog.adelinofaria.me/index.html
+        dest: appdata/sites/status.adelinofaria.me/index.html
         mode: '0644'
 
     # Starting container

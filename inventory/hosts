@@ -12,13 +12,13 @@ webserver01
 # jenkins01
 
 [kvm]
+ddns01
 docker01
 
 [docker]
-docker01
-
-[docker_container]
 ddns01
+webserver01
+docker01
 
 # Operating Systems
 

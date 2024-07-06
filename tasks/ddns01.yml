@@ -1,0 +1,10 @@
+---
+# file: tasks/ddns01.yml
+- name: Running ddns01.yml playbook
+  when: ansible_hostname == 'ddns01'
+  block:
+    - name: Import role
+      ansible.builtin.include_role:
+        name: kvm
+
+    # Install dependencies
