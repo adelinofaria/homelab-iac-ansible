@@ -65,7 +65,7 @@
 
     - name: Create html
       ansible.builtin.copy:
-        content: "{{ lookup('template', 'files/report/report.html.j2') }}"
+        content: "{{ lookup('template', 'templates/report/report.html.j2') }}"
         dest: ./reports/report.html
         mode: '0644'
       delegate_to: localhost
