@@ -18,12 +18,13 @@
             - inventory_hostname == hostvars[item].node
             - ('lxc' in ansible_limit) or (item in (ansible_limit | default(groups['lxc'])))
           ansible.builtin.include_role:
-            name: proxmox_lxc_rm_container
+            name: proxmox_lxc
           vars:
-            proxmox_lxc_rm_container_api_host: "{{ inventory_hostname }}"
-            proxmox_lxc_rm_container_api_user: "{{ api_user }}"
-            proxmox_lxc_rm_container_api_password: "{{ api_password }}"
-            proxmox_lxc_rm_container_vmid: "{{ hostvars[item].vmid }}"
+            proxmox_lxc_api_host: "{{ inventory_hostname }}"
+            proxmox_lxc_api_user: "{{ api_user }}"
+            proxmox_lxc_api_password: "{{ api_password }}"
+            proxmox_lxc_vmid: "{{ hostvars[item].vmid }}"
+            proxmox_lxc_state: absent
 
         - name: Create lxc infrastructure
           loop: "{{ groups['lxc'] }}"

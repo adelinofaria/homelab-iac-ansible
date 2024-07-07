@@ -12,7 +12,9 @@
     _proxmox_lxc_vm_info
 
 - name: Create block lxc vmid-{{ proxmox_lxc_vmid }}
-  when: _proxmox_lxc_vm_info.proxmox_vms | length == 0
+  when:
+    - proxmox_lxc_state | default('present') != 'absent'
+    - _proxmox_lxc_vm_info.proxmox_vms | length == 0
   block:
     - name: Make sure base system container template is present
       community.general.proxmox_template:
@@ -56,7 +58,9 @@
         state: started
 
 - name: Update block lxc vmid-{{ proxmox_lxc_vmid }}
-  when: _proxmox_lxc_vm_info.proxmox_vms | length > 0
+  when:
+    - proxmox_lxc_state | default('present') != 'absent'
+    - _proxmox_lxc_vm_info.proxmox_vms | length > 0
   block:
     - name: Update config lxc vmid-{{ proxmox_lxc_vmid }}
       community.general.proxmox:
@@ -78,16 +82,25 @@
         description: "{{ proxmox_lxc_description }}"
         onboot: "{{ proxmox_lxc_onboot }}"
         update: true
-      changed_when: false # Due update: true, this task results in always changed, we fix that state on the next task where compare digests.
+      notify: Restart lxc
 
-    - name: Retrieve info lxc vmid-{{ proxmox_lxc_vmid }}
-      community.general.proxmox_vm_info:
+- name: Deletion block lxc vmid-{{ proxmox_lxc_vmid }}
+  when:
+    - proxmox_lxc_state | default('present') == 'absent'
+    - _proxmox_lxc_vm_info.proxmox_vms | length > 0
+  block:
+    - name: Stop with prejudice lxc vmid-{{ proxmox_lxc_vmid }}
+      community.general.proxmox:
         api_host: "{{ proxmox_lxc_api_host }}"
         api_user: "{{ proxmox_lxc_api_user }}"
         api_password: "{{ proxmox_lxc_api_password }}"
         vmid: "{{ proxmox_lxc_vmid }}"
-        config: current
-      register:
-        _proxmox_lxc_update_vm_info
-      changed_when: _proxmox_lxc_vm_info.proxmox_vms[0].config.digest != _proxmox_lxc_update_vm_info.proxmox_vms[0].config.digest
-      notify: Restart lxc
+        force: true
+        state: stopped
+    - name: Remove lxc vmid-{{ proxmox_lxc_vmid }}
+      community.general.proxmox:
+        api_host: "{{ proxmox_lxc_api_host }}"
+        api_user: "{{ proxmox_lxc_api_user }}"
+        api_password: "{{ proxmox_lxc_api_password }}"
+        vmid: "{{ proxmox_lxc_vmid }}"
+        state: absent
