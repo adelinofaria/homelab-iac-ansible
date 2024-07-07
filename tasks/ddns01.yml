@@ -3,8 +3,32 @@
 - name: Running ddns01.yml playbook
   when: ansible_hostname == 'ddns01'
   block:
-    - name: Import role
+    - name: Import role lxc
       ansible.builtin.include_role:
-        name: kvm
+        name: lxc
+    - name: Import role docker
+      ansible.builtin.include_role:
+        name: docker
 
-    # Install dependencies
+    # File directory config
+
+    - name: Create project folder
+      ansible.builtin.file:
+        path: cloudflare-ddns
+        mode: '0755'
+        state: directory
+
+    - name: Copy docker-compose.yml file
+      ansible.builtin.template:
+        src: templates/cloudflare-ddns/docker-compose.yml.j2
+        dest: cloudflare-ddns/docker-compose.yml
+        mode: '0644'
+      vars:
+        cloudflare_api_token: "{{ vault_cf_api_token }}"
+
+    # Starting container
+
+    - name: Compose up
+      community.docker.docker_compose_v2:
+        project_src: cloudflare-ddns
+      register: output

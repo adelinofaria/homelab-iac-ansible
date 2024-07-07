@@ -20,8 +20,9 @@
       ansible.builtin.get_url:
         url: https://www.internic.net/domain/named.root
         dest: /var/lib/unbound/root.hints
+        owner: root
+        group: root
         mode: '0644'
-      notify: Restart unbound
       register: roothints_file
 
     - name: Copy unbound01.conf with owner and permissions
@@ -31,7 +32,6 @@
         owner: root
         group: root
         mode: '0644'
-      notify: Restart unbound
       register: unbound01conf_file
 
     - name: Run CRON job to update root.hints every 3 months on the first day at 06:30.

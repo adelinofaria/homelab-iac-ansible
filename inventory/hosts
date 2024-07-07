@@ -5,14 +5,14 @@ pve01
 [lxc]
 pihole01 # -> dns01
 unbound01 # -> updns01
+ddns01
 webserver01
 # logs01
 # homeassistant01
-# plex01
+plex01
 # jenkins01
 
 [kvm]
-ddns01
 docker01
 
 [docker]

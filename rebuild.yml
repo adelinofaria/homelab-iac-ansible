@@ -32,34 +32,34 @@
             - inventory_hostname == hostvars[item].node
             - ('lxc' in ansible_limit) or (item in (ansible_limit | default(groups['lxc'])))
           ansible.builtin.include_role:
-            name: proxmox_lxc_add_container
+            name: proxmox_lxc
           vars:
-            proxmox_lxc_add_container_node: "{{ hostvars[item].node }}"
-            proxmox_lxc_add_container_api_host: "{{ inventory_hostname }}"
-            proxmox_lxc_add_container_api_user: "{{ api_user }}"
-            proxmox_lxc_add_container_api_password: "{{ api_password }}"
-            proxmox_lxc_add_container_vmid: "{{ hostvars[item].vmid }}"
-            proxmox_lxc_add_container_hostname: "{{ item }}"
-            proxmox_lxc_add_container_cores: "{{ hostvars[item].cores }}"
-            proxmox_lxc_add_container_memory: "{{ hostvars[item].memory }}"
-            proxmox_lxc_add_container_swap: "{{ hostvars[item].swap }}"
-            proxmox_lxc_add_container_storage: "{{ hostvars[item].storage }}"
-            proxmox_lxc_add_container_netif_net0_name: eth0
-            proxmox_lxc_add_container_netif_net0_hwaddr: "{{ hostvars[item].hwaddr }}"
-            proxmox_lxc_add_container_netif_net0_ip: "{{ hostvars[item].ip }}"
-            proxmox_lxc_add_container_netif_net0_gw: "{{ hostvars[item].gw }}"
-            proxmox_lxc_add_container_netif_net0_ip6: "{{ hostvars[item].ip6 }}"
-            proxmox_lxc_add_container_netif_net0_gw6: "{{ hostvars[item].gw6 }}"
-            proxmox_lxc_add_container_netif_net0_bridge: vmbr0
-            proxmox_lxc_add_container_timezone: host
-            proxmox_lxc_add_container_pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
-            proxmox_lxc_add_container_features: "{{ hostvars[item].features | default(omit) }}"
-            proxmox_lxc_add_container_description: "{{ hostvars[item].description }}"
-            proxmox_lxc_add_container_onboot: true
-            proxmox_lxc_add_container_ostemplate: "{{ hostvars[item].ostemplate }}"
-            proxmox_lxc_add_container_template_storage: "{{ hostvars[item].template_storage }}"
-            proxmox_lxc_add_container_template_content_type: "{{ hostvars[item].template_content_type }}"
-            proxmox_lxc_add_container_template: "{{ hostvars[item].template }}"
+            proxmox_lxc_node: "{{ hostvars[item].node }}"
+            proxmox_lxc_api_host: "{{ inventory_hostname }}"
+            proxmox_lxc_api_user: "{{ api_user }}"
+            proxmox_lxc_api_password: "{{ api_password }}"
+            proxmox_lxc_vmid: "{{ hostvars[item].vmid }}"
+            proxmox_lxc_hostname: "{{ item }}"
+            proxmox_lxc_cores: "{{ hostvars[item].cores }}"
+            proxmox_lxc_memory: "{{ hostvars[item].memory }}"
+            proxmox_lxc_swap: "{{ hostvars[item].swap }}"
+            proxmox_lxc_storage: "{{ hostvars[item].storage }}"
+            proxmox_lxc_netif_net0_name: eth0
+            proxmox_lxc_netif_net0_hwaddr: "{{ hostvars[item].hwaddr }}"
+            proxmox_lxc_netif_net0_ip: "{{ hostvars[item].ip }}"
+            proxmox_lxc_netif_net0_gw: "{{ hostvars[item].gw }}"
+            proxmox_lxc_netif_net0_ip6: "{{ hostvars[item].ip6 }}"
+            proxmox_lxc_netif_net0_gw6: "{{ hostvars[item].gw6 }}"
+            proxmox_lxc_netif_net0_bridge: vmbr0
+            proxmox_lxc_timezone: host
+            proxmox_lxc_pubkey: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+            proxmox_lxc_features: "{{ hostvars[item].features | default(omit) }}"
+            proxmox_lxc_description: "{{ hostvars[item].description }}"
+            proxmox_lxc_onboot: true
+            proxmox_lxc_ostemplate: "{{ hostvars[item].ostemplate }}"
+            proxmox_lxc_template_storage: "{{ hostvars[item].template_storage }}"
+            proxmox_lxc_template_content_type: "{{ hostvars[item].template_content_type }}"
+            proxmox_lxc_template: "{{ hostvars[item].template }}"
 
         - name: Remove kvm infrastructure
           loop: "{{ groups['kvm'] }}"

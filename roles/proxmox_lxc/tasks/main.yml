@@ -1,0 +1,93 @@
+---
+# file: roles/proxmox_lxc/tasks/main.yml
+
+- name: Retrieve info lxc vmid-{{ proxmox_lxc_vmid }}
+  community.general.proxmox_vm_info:
+    api_host: "{{ proxmox_lxc_api_host }}"
+    api_user: "{{ proxmox_lxc_api_user }}"
+    api_password: "{{ proxmox_lxc_api_password }}"
+    vmid: "{{ proxmox_lxc_vmid }}"
+    config: current
+  register:
+    _proxmox_lxc_vm_info
+
+- name: Create block lxc vmid-{{ proxmox_lxc_vmid }}
+  when: _proxmox_lxc_vm_info.proxmox_vms | length == 0
+  block:
+    - name: Make sure base system container template is present
+      community.general.proxmox_template:
+        node: "{{ proxmox_lxc_node }}"
+        api_host: "{{ proxmox_lxc_api_host }}"
+        api_user: "{{ proxmox_lxc_api_user }}"
+        api_password: "{{ proxmox_lxc_api_password }}"
+        storage: "{{ proxmox_lxc_template_storage }}"
+        content_type: "{{ proxmox_lxc_template_content_type }}"
+        template: "{{ proxmox_lxc_template }}"
+        state: present
+
+    - name: Add lxc vmid-{{ proxmox_lxc_vmid }}
+      community.general.proxmox:
+        node: "{{ proxmox_lxc_node }}"
+        api_host: "{{ proxmox_lxc_api_host }}"
+        api_user: "{{ proxmox_lxc_api_user }}"
+        api_password: "{{ proxmox_lxc_api_password }}"
+        vmid: "{{ proxmox_lxc_vmid }}"
+        hostname: "{{ proxmox_lxc_hostname }}"
+        cores: "{{ proxmox_lxc_cores }}"
+        memory: "{{ proxmox_lxc_memory }}"
+        swap: "{{ proxmox_lxc_swap }}"
+        storage: "{{ proxmox_lxc_storage }}"
+        netif:
+          net0: "name={{ proxmox_lxc_netif_net0_name }},hwaddr={{ proxmox_lxc_netif_net0_hwaddr }},ip={{ proxmox_lxc_netif_net0_ip }},gw={{ proxmox_lxc_netif_net0_gw }},ip6={{ proxmox_lxc_netif_net0_ip6 }},gw6={{ proxmox_lxc_netif_net0_gw6 }},bridge={{ proxmox_lxc_netif_net0_bridge }}" # noqa: yaml[line-length]
+        pubkey: "{{ proxmox_lxc_pubkey }}"
+        ostemplate: "{{ proxmox_lxc_ostemplate }}"
+        timezone: "{{ proxmox_lxc_timezone }}"
+        features: "{{ proxmox_lxc_features }}"
+        description: "{{ proxmox_lxc_description }}"
+        onboot: "{{ proxmox_lxc_onboot }}"
+        state: present
+
+    - name: Start lxc vmid-{{ proxmox_lxc_vmid }}
+      community.general.proxmox:
+        api_host: "{{ proxmox_lxc_api_host }}"
+        api_user: "{{ proxmox_lxc_api_user }}"
+        api_password: "{{ proxmox_lxc_api_password }}"
+        vmid: "{{ proxmox_lxc_vmid }}"
+        state: started
+
+- name: Update block lxc vmid-{{ proxmox_lxc_vmid }}
+  when: _proxmox_lxc_vm_info.proxmox_vms | length > 0
+  block:
+    - name: Update config lxc vmid-{{ proxmox_lxc_vmid }}
+      community.general.proxmox:
+        node: "{{ proxmox_lxc_node }}"
+        api_host: "{{ proxmox_lxc_api_host }}"
+        api_user: "{{ proxmox_lxc_api_user }}"
+        api_password: "{{ proxmox_lxc_api_password }}"
+        vmid: "{{ proxmox_lxc_vmid }}"
+        hostname: "{{ proxmox_lxc_hostname }}"
+        cores: "{{ proxmox_lxc_cores }}"
+        memory: "{{ proxmox_lxc_memory }}"
+        swap: "{{ proxmox_lxc_swap }}"
+        storage: "{{ proxmox_lxc_storage }}"
+        netif:
+          net0: "name={{ proxmox_lxc_netif_net0_name }},hwaddr={{ proxmox_lxc_netif_net0_hwaddr }},ip={{ proxmox_lxc_netif_net0_ip }},gw={{ proxmox_lxc_netif_net0_gw }},ip6={{ proxmox_lxc_netif_net0_ip6 }},gw6={{ proxmox_lxc_netif_net0_gw6 }},bridge={{ proxmox_lxc_netif_net0_bridge }}" # noqa: yaml[line-length]
+        pubkey: "{{ proxmox_lxc_pubkey }}"
+        timezone: "{{ proxmox_lxc_timezone }}"
+        features: "{{ proxmox_lxc_features }}"
+        description: "{{ proxmox_lxc_description }}"
+        onboot: "{{ proxmox_lxc_onboot }}"
+        update: true
+      changed_when: false # Due update: true, this task results in always changed, we fix that state on the next task where compare digests.
+
+    - name: Retrieve info lxc vmid-{{ proxmox_lxc_vmid }}
+      community.general.proxmox_vm_info:
+        api_host: "{{ proxmox_lxc_api_host }}"
+        api_user: "{{ proxmox_lxc_api_user }}"
+        api_password: "{{ proxmox_lxc_api_password }}"
+        vmid: "{{ proxmox_lxc_vmid }}"
+        config: current
+      register:
+        _proxmox_lxc_update_vm_info
+      changed_when: _proxmox_lxc_vm_info.proxmox_vms[0].config.digest != _proxmox_lxc_update_vm_info.proxmox_vms[0].config.digest
+      notify: Restart lxc
