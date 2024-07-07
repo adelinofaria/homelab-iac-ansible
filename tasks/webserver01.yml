@@ -35,11 +35,11 @@
 
     - name: Clone adelinofaria.me
       ansible.builtin.git:
-        repo: https://github.com/adelinofaria/adelinofaria.github.io
+        repo: https://github.com/adelinofaria/adelinofaria.me
         dest: appdata/sites/adelinofaria.me
         accept_newhostkey: true
         single_branch: true
-        version: master
+        version: main
 
     - name: Clone adelinofaria.me
       ansible.builtin.git:
@@ -49,7 +49,13 @@
         single_branch: true
         version: master
 
+    - name: Was wordpress installed
+      ansible.builtin.stat:
+        path: appdata/sites/blog.adelinofaria.me/wordpress
+      register: wordpress_folder
+
     - name: Download wordpress
+      when: not wordpress_folder.stat.exists
       ansible.builtin.unarchive:
         src: https://wordpress.org/latest.tar.gz
         dest: appdata/sites/blog.adelinofaria.me
