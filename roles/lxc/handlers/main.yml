@@ -1,0 +1,16 @@
+---
+# file: roles/lxc/handlers/main.yml
+
+- name: Reboot lxc
+  community.general.proxmox:
+    node: "{{ hostvars[inventory_hostname].node }}"
+    api_host: "{{ hostvars[inventory_hostname].node }}"
+    api_user: "{{ hostvars[hostvars[inventory_hostname].node].api_user }}"
+    api_password: "{{ hostvars[hostvars[inventory_hostname].node].api_password }}"
+    vmid: "{{ hostvars[inventory_hostname].vmid }}"
+    state: restarted
+  delegate_to: "{{ hostvars[inventory_hostname].node }}"
+
+- name: LXC needs a couple of seconds to restart - no other way for the time being
+  ansible.builtin.pause:
+    seconds: 6

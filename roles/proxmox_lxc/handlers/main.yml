@@ -1,6 +1,14 @@
 ---
 # file: roles/proxmox_lxc/handlers/main.yml
 
+- name: Start lxc
+  community.general.proxmox:
+    api_host: "{{ proxmox_lxc_api_host }}"
+    api_user: "{{ proxmox_lxc_api_user }}"
+    api_password: "{{ proxmox_lxc_api_password }}"
+    vmid: "{{ proxmox_lxc_vmid }}"
+    state: started
+
 - name: Restart lxc
   community.general.proxmox:
     api_host: "{{ proxmox_lxc_api_host }}"

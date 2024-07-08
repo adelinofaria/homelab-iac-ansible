@@ -32,5 +32,5 @@ unbound01
 webserver01
 docker01
 # homeassistant01
-# plex01
+plex01
 # jenkins01

@@ -39,6 +39,7 @@
         memory: "{{ proxmox_lxc_memory }}"
         swap: "{{ proxmox_lxc_swap }}"
         storage: "{{ proxmox_lxc_storage }}"
+        mounts: "{{ proxmox_lxc_mounts }}"
         netif:
           net0: "name={{ proxmox_lxc_netif_net0_name }},hwaddr={{ proxmox_lxc_netif_net0_hwaddr }},ip={{ proxmox_lxc_netif_net0_ip }},gw={{ proxmox_lxc_netif_net0_gw }},ip6={{ proxmox_lxc_netif_net0_ip6 }},gw6={{ proxmox_lxc_netif_net0_gw6 }},bridge={{ proxmox_lxc_netif_net0_bridge }}" # noqa: yaml[line-length]
         pubkey: "{{ proxmox_lxc_pubkey }}"
@@ -74,6 +75,7 @@
         memory: "{{ proxmox_lxc_memory }}"
         swap: "{{ proxmox_lxc_swap }}"
         storage: "{{ proxmox_lxc_storage }}"
+        mounts: "{{ proxmox_lxc_mounts }}"
         netif:
           net0: "name={{ proxmox_lxc_netif_net0_name }},hwaddr={{ proxmox_lxc_netif_net0_hwaddr }},ip={{ proxmox_lxc_netif_net0_ip }},gw={{ proxmox_lxc_netif_net0_gw }},ip6={{ proxmox_lxc_netif_net0_ip6 }},gw6={{ proxmox_lxc_netif_net0_gw6 }},bridge={{ proxmox_lxc_netif_net0_bridge }}" # noqa: yaml[line-length]
         pubkey: "{{ proxmox_lxc_pubkey }}"
@@ -82,7 +84,9 @@
         description: "{{ proxmox_lxc_description }}"
         onboot: "{{ proxmox_lxc_onboot }}"
         update: true
-      notify: Restart lxc
+      notify:
+        - Start lxc
+        - Restart lxc
 
 - name: Deletion block lxc vmid-{{ proxmox_lxc_vmid }}
   when:

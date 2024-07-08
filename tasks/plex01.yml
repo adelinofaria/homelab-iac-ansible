@@ -1,139 +1,36 @@
 ---
-# file: tasks/webserver01.yml
-- name: Running webserver01.yml playbook
-  when: ansible_hostname == 'webserver01'
+# file: tasks/plex01.yml
+- name: Running plex01.yml playbook
+  when: ansible_hostname == 'plex01'
   block:
     - name: Import role lxc
       ansible.builtin.include_role:
         name: lxc
-    - name: Import role docker
-      ansible.builtin.include_role:
-        name: docker
 
-    # # File directory config
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - curl
+          - gnupg
+        update_cache: true
 
-    # - name: Create folders
-    #   loop: ['./appdata', './appdata/sites', 'appdata/sites/blog.adelinofaria.me', 'appdata/sites/status.adelinofaria.me']
-    #   ansible.builtin.file:
-    #     path: "{{ item }}"
-    #     mode: '0755'
-    #     state: directory
+    - name: Add Plex GPG apt Key
+      ansible.builtin.apt_key:
+        url: https://downloads.plex.tv/plex-keys/PlexSign.key
+        state: present
 
-    # - name: Copy docker-compose.yml file
-    #   ansible.builtin.copy:
-    #     src: files/docker-swag/docker-compose.yml
-    #     dest: appdata/docker-compose.yml
-    #     mode: '0644'
+    - name: Add Plex Repository
+      ansible.builtin.apt_repository:
+        repo: deb https://downloads.plex.tv/repo/deb public main
+        state: present
 
-    # # Prepare websites
+    - name: Update apt and install plexmediaserver
+      ansible.builtin.apt:
+        name:
+          - plexmediaserver
+        update_cache: true
+      notify: Reboot lxc
 
-    # - name: Add a setting to ~/.gitconfig
-    #   community.general.git_config:
-    #     name: safe.directory
-    #     scope: global
-    #     value: '*'
-
-    # - name: Clone adelinofaria.me
-    #   ansible.builtin.git:
-    #     repo: https://github.com/adelinofaria/adelinofaria.me
-    #     dest: appdata/sites/adelinofaria.me
-    #     accept_newhostkey: true
-    #     single_branch: true
-    #     version: main
-
-    # - name: Clone adelinofaria.me
-    #   ansible.builtin.git:
-    #     repo: https://github.com/adelinofaria/adelinofaria.github.io
-    #     dest: appdata/sites/error.adelinofaria.me
-    #     accept_newhostkey: true
-    #     single_branch: true
-    #     version: master
-
-    # - name: Was wordpress installed
-    #   ansible.builtin.stat:
-    #     path: appdata/sites/blog.adelinofaria.me/wordpress
-    #   register: wordpress_folder
-
-    # - name: Download wordpress
-    #   when: not wordpress_folder.stat.exists
-    #   ansible.builtin.unarchive:
-    #     src: https://wordpress.org/latest.tar.gz
-    #     dest: appdata/sites/blog.adelinofaria.me
-    #     remote_src: true
-
-    # - name: Copy status
-    #   ansible.builtin.copy:
-    #     src: reports/report.html
-    #     dest: appdata/sites/status.adelinofaria.me/index.html
-    #     mode: '0644'
-
-    # # Starting container
-
-    # - name: Compose up
-    #   community.docker.docker_compose_v2:
-    #     project_src: appdata
-    #     wait: true
-
-    # - name: Docker needs a couple of seconds to mount volumes for further config
-    #   ansible.builtin.pause:
-    #     seconds: 2
-
-    # # Configuring container
-
-    # - name: Comment out the dns_cloudflare_email entry at dns-conf/cloudflare.ini
-    #   ansible.builtin.replace:
-    #     path: appdata/swag/dns-conf/cloudflare.ini
-    #     regexp: '^dns_cloudflare_email(\s+.*)?$'
-    #     replace: '#\1'
-    #   notify:
-    #     - Restart container
-
-    # - name: Comment out the dns_cloudflare_api_key entry at dns-conf/cloudflare.ini
-    #   ansible.builtin.replace:
-    #     path: appdata/swag/dns-conf/cloudflare.ini
-    #     regexp: '^dns_cloudflare_api_key(\s+.*)?$'
-    #     replace: '#\1'
-    #   notify:
-    #     - Restart container
-
-    # - name: Uncomment and fill the dns_cloudflare_api_token entry at dns-conf/cloudflare.ini
-    #   ansible.builtin.replace:
-    #     path: appdata/swag/dns-conf/cloudflare.ini
-    #     regexp: '^#\s*dns_cloudflare_api_token\s*=\s*.*$'
-    #     replace: "dns_cloudflare_api_token = {{ cloudflare_api_token }}"
-    #   vars:
-    #     cloudflare_api_token: "{{ vault_cf_api_token }}"
-    #   notify:
-    #     - Restart container
-
-    # - name: Fix folder for root website (adelinofaria.me) at nginx/site-confs/default.conf
-    #   ansible.builtin.replace:
-    #     path: appdata/swag/nginx/site-confs/default.conf
-    #     regexp: '^(\s*root \/config)\/.*;$'
-    #     replace: '\1/sites/adelinofaria.me;'
-    #   notify:
-    #     - Restart container
-
-    # - name: Copy nginx subdomain site-config - blog.adelinofaria.me.conf
-    #   ansible.builtin.copy:
-    #     src: files/docker-swag/blog.adelinofaria.me.conf
-    #     dest: appdata/swag/nginx/site-confs/blog.adelinofaria.me.conf
-    #     mode: '0664'
-    #   notify:
-    #     - Restart container
-
-    # - name: Copy nginx subdomain site-config - error.adelinofaria.me.conf
-    #   ansible.builtin.copy:
-    #     src: files/docker-swag/error.adelinofaria.me.conf
-    #     dest: appdata/swag/nginx/site-confs/error.adelinofaria.me.conf
-    #     mode: '0664'
-    #   notify:
-    #     - Restart container
-
-    # - name: Copy nginx subdomain site-config - status.adelinofaria.me.conf
-    #   ansible.builtin.copy:
-    #     src: files/docker-swag/status.adelinofaria.me.conf
-    #     dest: appdata/swag/nginx/site-confs/status.adelinofaria.me.conf
-    #     mode: '0664'
-    #   notify:
-    #     - Restart container
+# https://www.geekbitzone.com/posts/2022/proxmox/plex-lxc/install-plex-in-proxmox-lxc/
+# https://www.reddit.com/r/synology/comments/xz3fka/plex_can_transcode_directly_to_available_memory/
+# https://www.reddit.com/r/synology/comments/xz3fka/plex_can_transcode_directly_to_available_memory/

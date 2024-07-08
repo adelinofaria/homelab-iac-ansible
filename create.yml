@@ -22,6 +22,7 @@
         proxmox_lxc_memory: "{{ hostvars[item].memory }}"
         proxmox_lxc_swap: "{{ hostvars[item].swap }}"
         proxmox_lxc_storage: "{{ hostvars[item].storage }}"
+        proxmox_lxc_mounts: "{{ hostvars[item].mounts | default(omit) }}"
         proxmox_lxc_netif_net0_name: eth0
         proxmox_lxc_netif_net0_hwaddr: "{{ hostvars[item].hwaddr }}"
         proxmox_lxc_netif_net0_ip: "{{ hostvars[item].ip }}"
