@@ -5,7 +5,7 @@ node: pve01
 vmid: 200
 cores: 1
 memory: 512
-swap: 1024
+swap: 512
 storage: local-lvm
 hwaddr: 02:00:00:00:00:0c
 ip: 192.168.1.12/24

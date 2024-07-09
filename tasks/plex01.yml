@@ -24,6 +24,33 @@
         repo: deb https://downloads.plex.tv/repo/deb public main
         state: present
 
+    - name: Add cgroup rule
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/nodes/{{ hostvars[inventory_hostname].node }}/lxc/{{ hostvars[inventory_hostname].vmid }}.conf"
+        line: "{{ item }}"
+      loop:
+        - 'lxc.cgroup2.devices.allow: c 226:0 rwm'
+        - 'lxc.cgroup2.devices.allow: c 226:128 rwm'
+        - 'lxc.mount.entry: /dev/dri/renderD128 dev/dri/renderD128 none bind,optional,create=file'
+      delegate_to: "{{ hostvars[inventory_hostname].node }}"
+      notify: Reboot lxc
+
+    - name: Ensure /dev/dri/renderD128 have the right permissions
+      ansible.builtin.file:
+        path: /dev/dri/renderD128
+        mode: 0666
+      delegate_to: "{{ hostvars[inventory_hostname].node }}"
+      notify: Reboot lxc
+
+    - name: Add tmpfs entry in /etc/fstab
+      ansible.builtin.blockinfile:
+        path: "/etc/fstab"
+        block: |
+          # Ram disks
+          tmpfs /mnt/transcoding tmpfs defaults,noatime,nosuid,nodev,noexec,size=2G,mode=1777 0 0
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      notify: Reboot lxc
+
     - name: Update apt and install plexmediaserver
       ansible.builtin.apt:
         name:
@@ -31,6 +58,32 @@
         update_cache: true
       notify: Reboot lxc
 
+# Passthrough external usb storage device
+# dev0: /dev/sda1
+
+# ls -l /dev/sda1
+# brw-rw---- 1 root disk 8, 1 Jan  1 01:37 /dev/sda1
+
+# lxc.cgroup.devices.allow = b 8:1 rwm
+# lxc.mount.entry: /dev/sda1 dev/sda1 none bind,optional,create=file
+
+# Need to passthrough intel gpu device
+
+# https://pve.proxmox.com/wiki/Linux_Container#_bind_mount_points
+
+
+# host fstab
+#
+# Ram disks
+# tmpfs /mnt/transcoding tmpfs defaults,noatime,nosuid,nodev,noexec,size=2G,mode=1777 0 0
+#
+# External drives
+# UUID=48440e13-a130-49ba-a0b5-4d486a26c202 /mnt/plex-media ext4 defaults,noatime,nofail 0 2
+
 # https://www.geekbitzone.com/posts/2022/proxmox/plex-lxc/install-plex-in-proxmox-lxc/
+# https://forum.proxmox.com/threads/proxmox-lxc-igpu-passthrough.141381/
+# https://forum.proxmox.com/threads/lxc-i9-12900t-gpu-plex-passthrough.109439/post-476686
+# https://manpages.ubuntu.com/manpages/jammy/en/man5/lxc.container.conf.5.html
 # https://www.reddit.com/r/synology/comments/xz3fka/plex_can_transcode_directly_to_available_memory/
-# https://www.reddit.com/r/synology/comments/xz3fka/plex_can_transcode_directly_to_available_memory/
+# https://herold.space/proxmox-lxc-intel-quick-sync-for-plex/
+# https://jellyfin.org/docs/general/administration/hardware-acceleration/intel/#lxc-on-proxmox

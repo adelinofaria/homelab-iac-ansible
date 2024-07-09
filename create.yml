@@ -67,7 +67,7 @@
         proxmox_kvm_add_container_onboot: true
 
 - name: Specific host playbook
-  hosts: lxc,kvm
+  hosts: all
   tasks:
     - name: Run host specific task file
       ansible.builtin.include_tasks: "tasks/{{ inventory_hostname }}.yml"

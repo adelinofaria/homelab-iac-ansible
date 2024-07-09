@@ -1,0 +1,33 @@
+---
+# file: tasks/pve01.yml
+
+- name: Hi pve01
+  ansible.builtin.debug:
+    msg: hi there
+
+# - name: Add cgroup rule
+#   ansible.builtin.blockinfile:
+#     path: /etc/pve/nodes/pve01/lxc/310.conf
+#     block: |
+#       lxc.cgroup2.devices.allow: c 226:0 rwm
+#       lxc.cgroup2.devices.allow: c 226:128 rwm
+#       lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+#     marker: "# {mark} ANSIBLE MANAGED BLOCK"
+
+# - name: Add cgroup rule
+#   ansible.builtin.blockinfile:
+#     path: /etc/pve/nodes/epona/lxc/100.conf
+#     state: present
+#     block: |
+#     lxc.cgroup2.devices.allow: c 226:0 rwm
+# lxc.cgroup2.devices.allow: c 226:128 rwm
+# lxc.cgroup2.devices.allow: c 29:0 rwm
+# lxc.cgroup2.devices.allow: c 13:* rwm
+# lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+# lxc.mount.entry: /dev/fb0 dev/fb0 none bind,optional,create=file
+# lxc.autodev: 1
+# lxc.hook.autodev: sh -c "chmod -R 666 /dev/dri/card*; chmod -R 666 /dev/dri/render*" # Only add if it doesn't work
+
+# https://www.reddit.com/r/Proxmox/comments/saxqm2/passing_igpu_through_to_unprivileged_lxc_help/
+
+# https://stackoverflow.com/questions/59142605/how-to-determine-the-cgroup-of-a-device-and-give-it-to-a-lxc-container
