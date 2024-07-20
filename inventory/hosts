@@ -8,12 +8,12 @@ unbound01 # -> updns01
 ddns01
 webserver01
 # logs01
-# homeassistant01
 plex01
 # jenkins01
 
 [kvm]
 # docker01
+homeassistant01
 
 [docker]
 ddns01
@@ -31,6 +31,5 @@ pihole01
 unbound01
 webserver01
 # docker01
-# homeassistant01
 plex01
 # jenkins01

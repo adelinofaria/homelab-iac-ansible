@@ -71,4 +71,4 @@
 
     - name: Restart pihole
       ansible.builtin.command: pihole restartdns
-      when: ednsconf_file.changed and customlist_file.changed
+      when: ednsconf_file.changed or customlist_file.changed

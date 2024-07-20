@@ -134,4 +134,6 @@ $RECYCLE.BIN/
 
 # Ingore ssh-keys
 ssh-keys/*
+
+# All vault files
 vault

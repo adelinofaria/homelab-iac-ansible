@@ -1,0 +1,111 @@
+---
+# file: roles/proxmox_kvm/tasks/main.yml
+
+- name: Retrieve info kvm vmid-{{ proxmox_kvm_vmid }}
+  community.general.proxmox_vm_info:
+    api_host: "{{ proxmox_kvm_api_host }}"
+    api_user: "{{ proxmox_kvm_api_user }}"
+    api_password: "{{ proxmox_kvm_api_password }}"
+    vmid: "{{ proxmox_kvm_vmid }}"
+    config: current
+  register:
+    _proxmox_kvm_vm_info
+
+- name: Create block kvm vmid-{{ proxmox_kvm_vmid }}
+  when:
+    - proxmox_kvm_state | default('present') != 'absent'
+    - _proxmox_kvm_vm_info.proxmox_vms | length == 0
+  block:
+    - name: Run template.yml
+      ansible.builtin.include_tasks: ./template.yml
+      vars:
+        proxmox_kvm_template_node: "{{ proxmox_kvm_node }}"
+        proxmox_kvm_template_api_host: "{{ proxmox_kvm_api_host }}"
+        proxmox_kvm_template_api_user: "{{ proxmox_kvm_api_user }}"
+        proxmox_kvm_template_api_password: "{{ proxmox_kvm_api_password }}"
+        proxmox_kvm_template_vmid: "9{{ proxmox_kvm_vmid }}"
+        proxmox_kvm_template_name: "{{ proxmox_kvm_name }}-template"
+        proxmox_kvm_template_cores: "{{ proxmox_kvm_cores }}"
+        proxmox_kvm_template_memory: "{{ proxmox_kvm_memory }}"
+        proxmox_kvm_template_storage: "{{ proxmox_kvm_storage }}"
+        proxmox_kvm_template_size: "{{ proxmox_kvm_size }}"
+        proxmox_kvm_template_image_remote_url: "{{ proxmox_kvm_image_remote_url }}"
+        proxmox_kvm_template_image_checksum: "{{ proxmox_kvm_image_checksum }}"
+        proxmox_kvm_template_rebuild: false
+
+    - name: Clone kvm vmid-{{ proxmox_kvm_vmid }}
+      community.general.proxmox_kvm:
+        node: "{{ proxmox_kvm_node }}"
+        api_host: "{{ proxmox_kvm_api_host }}"
+        api_user: "{{ proxmox_kvm_api_user }}"
+        api_password: "{{ proxmox_kvm_api_password }}"
+        vmid: "9{{ proxmox_kvm_vmid }}"
+        newid: "{{ proxmox_kvm_vmid }}"
+        name: "{{ proxmox_kvm_name }}"
+        clone: arbitrary_value
+        state: present
+
+    - name: Update values - kvm vmid-{{ proxmox_kvm_vmid }}
+      community.general.proxmox_kvm:
+        node: "{{ proxmox_kvm_node }}"
+        api_host: "{{ proxmox_kvm_api_host }}"
+        api_user: "{{ proxmox_kvm_api_user }}"
+        api_password: "{{ proxmox_kvm_api_password }}"
+        vmid: "9{{ proxmox_kvm_vmid }}"
+        cores: "{{ proxmox_kvm_cores }}"
+        memory: "{{ proxmox_kvm_memory }}"
+        net:
+          net0: "virtio={{ proxmox_kvm_net_net0_hwaddr }},bridge=vmbr0"
+        ipconfig:
+          ipconfig0: "ip={{ proxmox_kvm_ipconfig_ipconfig0_ip }},gw={{ proxmox_kvm_ipconfig_ipconfig0_gw }},ip6={{ proxmox_kvm_ipconfig_ipconfig0_ip6 }},gw6={{ proxmox_kvm_ipconfig_ipconfig0_gw6 }}" # noqa: yaml[line-length]
+        sshkeys: "{{ proxmox_kvm_sshkeys }}"
+        description: "{{ proxmox_kvm_description }}"
+        onboot: "{{ proxmox_kvm_onboot }}"
+        update_unsafe: true
+        update: true
+
+    - name: Start kvm vmid-{{ proxmox_kvm_vmid }}
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_kvm_api_host }}"
+        api_user: "{{ proxmox_kvm_api_user }}"
+        api_password: "{{ proxmox_kvm_api_password }}"
+        vmid: "{{ proxmox_kvm_vmid }}"
+        state: started
+
+- name: Update block kvm vmid-{{ proxmox_kvm_vmid }}
+  when:
+    - proxmox_kvm_state | default('present') != 'absent'
+    - _proxmox_kvm_vm_info.proxmox_vms | length > 0
+  block:
+    - name: Update config kvm vmid-{{ proxmox_kvm_vmid }}
+      community.general.proxmox_kvm:
+        node: "{{ proxmox_kvm_node }}"
+        api_host: "{{ proxmox_kvm_api_host }}"
+        api_user: "{{ proxmox_kvm_api_user }}"
+        api_password: "{{ proxmox_kvm_api_password }}"
+        vmid: "{{ proxmox_kvm_vmid }}"
+        update: true
+      notify:
+        - Start kvm
+        - Restart kvm
+
+- name: Deletion block kvm vmid-{{ proxmox_kvm_vmid }}
+  when:
+    - proxmox_kvm_state | default('present') == 'absent'
+    - _proxmox_kvm_vm_info.proxmox_vms | length > 0
+  block:
+    - name: Stop with prejudice kvm vmid-{{ proxmox_kvm_vmid }}
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_kvm_api_host }}"
+        api_user: "{{ proxmox_kvm_api_user }}"
+        api_password: "{{ proxmox_kvm_api_password }}"
+        vmid: "{{ proxmox_kvm_vmid }}"
+        force: true
+        state: stopped
+    - name: Remove kvm vmid-{{ proxmox_kvm_vmid }}
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_kvm_api_host }}"
+        api_user: "{{ proxmox_kvm_api_user }}"
+        api_password: "{{ proxmox_kvm_api_password }}"
+        vmid: "{{ proxmox_kvm_vmid }}"
+        state: absent

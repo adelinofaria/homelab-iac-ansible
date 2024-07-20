@@ -1,0 +1,182 @@
+---
+# file: roles/proxmox_kvm/tasks/template.yml
+
+- name: Set proxmox_kvm_template_image facts
+  ansible.builtin.set_fact:
+    proxmox_kvm_template_image_filename: "{{ proxmox_kvm_template_image_remote_url | basename }}"
+    proxmox_kvm_template_image_filename_unarchived: "{{ proxmox_kvm_template_image_remote_url | basename }}"
+    proxmox_kvm_template_image_path_dest: "/tmp/{{ proxmox_kvm_template_image_remote_url | basename }}"
+    proxmox_kvm_template_image_path_dest_unarchived: "/tmp/{{ proxmox_kvm_template_image_remote_url | basename }}"
+
+- name: Update *_unarchived facts
+  when: proxmox_kvm_template_image_path_dest | splitext | last in ['.zip', '.tar', '.tar.gz', '.tar.bz2', '.tar.xz', '.tar.zst', '.xz']
+  ansible.builtin.set_fact:
+    proxmox_kvm_template_image_filename_unarchived: "{{ proxmox_kvm_template_image_filename | splitext | first }}"
+    proxmox_kvm_template_image_path_dest_unarchived: "{{ proxmox_kvm_template_image_path_dest | splitext | first }}"
+
+- name: Check if unarchived base image for kvm template exists
+  ansible.builtin.stat:
+    path: "{{ proxmox_kvm_template_image_path_dest_unarchived }}"
+  register:
+    _proxmox_kvm_template_image_path_dest_unarchived
+
+- name: Download/extract block
+  when: not _proxmox_kvm_template_image_path_dest_unarchived.stat.exists
+  block:
+    - name: Check if base image for kvm template exists
+      ansible.builtin.stat:
+        path: "{{ proxmox_kvm_template_image_path_dest }}"
+      register:
+        _proxmox_kvm_template_image_path_dest
+
+    - name: Download base image for kvm template from source
+      when: not _proxmox_kvm_template_image_path_dest.stat.exists
+      ansible.builtin.get_url:
+        url: "{{ proxmox_kvm_template_image_remote_url }}"
+        dest: "{{ proxmox_kvm_template_image_path_dest }}"
+        mode: '0644'
+        checksum: "{{ proxmox_kvm_template_image_checksum }}"
+
+    - name: Extract block
+      when: proxmox_kvm_template_image_path_dest | splitext | last in ['.zip', '.tar', '.tar.gz', '.tar.bz2', '.tar.xz', '.tar.zst', '.xz']
+      block:
+        - name: Extract image if needed
+          when: proxmox_kvm_template_image_path_dest | splitext | last in ['.zip', '.tar', '.tar.gz', '.tar.bz2', '.tar.xz', '.tar.zst']
+          ansible.builtin.unarchive:
+            src: "{{ proxmox_kvm_template_image_path_dest }}"
+            dest: /tmp
+            remote_src: true
+        - name: Extract xz
+          when: proxmox_kvm_template_image_path_dest | splitext | last in ['.xz']
+          ansible.builtin.command: "xz -d {{ proxmox_kvm_template_image_path_dest }}"
+          register: xz_cmd_output
+          changed_when: false
+          failed_when: xz_cmd_output.rc not in [0]
+
+- name: Retrieve kvm info - template kvm vmid-{{ proxmox_kvm_template_vmid }}
+  community.general.proxmox_vm_info:
+    api_host: "{{ proxmox_kvm_template_api_host }}"
+    api_user: "{{ proxmox_kvm_template_api_user }}"
+    api_password: "{{ proxmox_kvm_template_api_password }}"
+    vmid: "{{ proxmox_kvm_template_vmid }}"
+  register:
+    _proxmox_kvm_template_vm_info
+
+#################################################################################
+#                                                                               #
+#                      Delete existing the kvm template                         #
+#                                                                               #
+#################################################################################
+
+- name: Deletion block
+  when:
+    - proxmox_kvm_template_rebuild
+    - _proxmox_kvm_template_vm_info.proxmox_vms | length
+  block:
+    - name: Stop kvm with prejudice - template kvm vmid-{{ proxmox_kvm_template_vmid }}
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_kvm_template_api_host }}"
+        api_user: "{{ proxmox_kvm_template_api_user }}"
+        api_password: "{{ proxmox_kvm_template_api_password }}"
+        vmid: "{{ proxmox_kvm_template_vmid }}"
+        force: true
+        state: stopped
+
+    - name: Remove kvm - template kvm vmid-{{ proxmox_kvm_template_vmid }}
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_kvm_template_api_host }}"
+        api_user: "{{ proxmox_kvm_template_api_user }}"
+        api_password: "{{ proxmox_kvm_template_api_password }}"
+        vmid: "{{ proxmox_kvm_template_vmid }}"
+        state: absent
+
+#################################################################################
+#                                                                               #
+#                     Creating the KVM Template groundwork                      #
+#                                                                               #
+#################################################################################
+
+- name: Retrieve kvm info - template kvm vmid-{{ proxmox_kvm_template_vmid }}
+  community.general.proxmox_vm_info:
+    api_host: "{{ proxmox_kvm_template_api_host }}"
+    api_user: "{{ proxmox_kvm_template_api_user }}"
+    api_password: "{{ proxmox_kvm_template_api_password }}"
+    vmid: "{{ proxmox_kvm_template_vmid }}"
+  register:
+    _proxmox_kvm_template_vm_info
+
+- name: Creating kvm template block
+  when: not (_proxmox_kvm_template_vm_info.proxmox_vms | length)
+  block:
+    - name: Add template kvm vmid-{{ proxmox_kvm_template_vmid }}
+      community.general.proxmox_kvm:
+        node: "{{ proxmox_kvm_template_node }}"
+        api_host: "{{ proxmox_kvm_template_api_host }}"
+        api_user: "{{ proxmox_kvm_template_api_user }}"
+        api_password: "{{ proxmox_kvm_template_api_password }}"
+        vmid: "{{ proxmox_kvm_template_vmid }}"
+        name: "{{ proxmox_kvm_template_name }}"
+        machine: q35
+        bios: ovmf
+        ostype: l26
+        cpu: x86-64-v2-AES
+        cores: "{{ proxmox_kvm_template_cores }}"
+        sockets: 1
+        memory: "{{ proxmox_kvm_template_memory }}"
+        boot: 'order=scsi0'
+        efidisk0:
+          storage: "{{ proxmox_kvm_template_storage }}"
+          format: raw
+          efitype: 4m
+          pre_enrolled_keys: false
+        serial:
+          serial0: socket
+        vga: serial0
+        net:
+          net0: 'virtio,bridge=vmbr0'
+        ipconfig:
+          ipconfig0: 'ip=dhcp'
+        sshkeys: "{{ lookup('ansible.builtin.file', 'ssh-keys/homelab.pub') }}"
+        agent: 'enabled=1'
+        template: true
+
+    #################################################################################
+    #                                                                               #
+    #                         Import downloaded base image                          #
+    #                                                                               #
+    #################################################################################
+
+    # Haven't had any success with this command through community.general.proxmox_disk module
+    # and this feature isn't available anywhere in the GUI. So we're just doing it through cmd line.
+    - name: Import the cloud image as disk, through cmd line - template kvm vmid-{{ proxmox_kvm_template_vmid }}
+      ansible.builtin.command:
+        "qm disk import {{ proxmox_kvm_template_vmid }} {{ proxmox_kvm_template_image_path_dest_unarchived }} local-lvm -format qcow2"
+      register: cmd_output
+      changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
+
+    # When disk is imported, it's still unused as unused0, we need to attach to a disk (e.g. virtio0)
+    - name: Attach imported disk disk to the vm using VirtIO SCSI - template kvm vmid-{{ proxmox_kvm_template_vmid }}
+      community.general.proxmox_kvm:
+        node: "{{ proxmox_kvm_template_node }}"
+        api_host: "{{ proxmox_kvm_template_api_host }}"
+        api_user: "{{ proxmox_kvm_template_api_user }}"
+        api_password: "{{ proxmox_kvm_template_api_password }}"
+        vmid: "{{ proxmox_kvm_template_vmid }}"
+        name: "{{ proxmox_kvm_template_name }}"
+        scsihw: 'virtio-scsi-pci'
+        virtio:
+          virtio0: "local-lvm:vm-{{ proxmox_kvm_template_vmid }}-disk-1,iothread=1"
+        update_unsafe: true
+        update: true
+
+    # The initial disk should be resized to a bigger spaceis only 2GB, thus we make it larger 8G
+    - name: Imported image disk resize - template kvm vmid-{{ proxmox_kvm_template_vmid }}
+      community.general.proxmox_disk:
+        api_host: "{{ proxmox_kvm_template_api_host }}"
+        api_user: "{{ proxmox_kvm_template_api_user }}"
+        api_password: "{{ proxmox_kvm_template_api_password }}"
+        vmid: "{{ proxmox_kvm_template_vmid }}"
+        name: "{{ proxmox_kvm_template_name }}"
+        disk: virtio0
+        size: "{{ proxmox_kvm_template_size }}"
+        state: resized
