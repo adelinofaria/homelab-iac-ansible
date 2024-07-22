@@ -13,7 +13,7 @@ ip: 192.168.1.24/24
 gw: 192.168.1.1
 ip6: fe80::18/10
 gw6: fe80::ff:fe00:2201
-description: Home Assistant LXC - Open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts. Perfect to run on a Raspberry Pi or a local server.
+description: Home Assistant OS, KVM - Open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts. Perfect to run on a Raspberry Pi or a local server.
 kvm_image_remote_url: https://github.com/home-assistant/operating-system/releases/download/12.4/haos_ova-12.4.qcow2.xz
 kvm_image_checksum: sha512:73801a9fe3ade746b94ef12c791cc4cabe0c64ef668ec1cbc1aece3fc794136ee847ffa5215f672ad107ae4c5fa47dc83b6da331fdea834effcfa7129cba92a5 # noqa: yaml[line-length]
 notes: n/a

@@ -1,0 +1,35 @@
+---
+# file: tasks/haproxy01.yml
+- name: Running haproxy01.yml playbook
+  when: ansible_hostname == 'haproxy01'
+  block:
+    - name: Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - curl
+          - gnupg
+        update_cache: true
+
+    - name: Add HAProxy GPG apt key
+      ansible.builtin.apt_key:
+        url: https://haproxy.debian.net/bernat.debian.org.gpg
+        state: present
+
+    - name: Add HAProxy Repository
+      ansible.builtin.apt_repository:
+        repo: deb http://haproxy.debian.net bookworm-backports-3.0 main
+        state: present
+
+    # - name: Update apt and install haproxy
+    #   ansible.builtin.apt:
+    #     name:
+    #       - haproxy=3.0.\*
+    #     update_cache: true
+    #   notify: Reboot lxc
+
+# install certbot and certbot-dns-cloudflare plugin
+# install fail2ban?

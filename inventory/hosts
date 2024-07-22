@@ -6,10 +6,11 @@ pve01
 pihole01 # -> dns01
 unbound01 # -> updns01
 ddns01
+haproxy01
 webserver01
 # logs01
 plex01
-# jenkins01
+jenkins01
 
 [kvm]
 # docker01
@@ -29,7 +30,8 @@ ddns01
 pve01
 pihole01
 unbound01
+haproxy01
 webserver01
 # docker01
 plex01
-# jenkins01
+jenkins01

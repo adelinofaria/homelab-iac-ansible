@@ -1,0 +1,34 @@
+---
+# file: tasks/jenkins01.yml
+- name: Running jenkins01.yml playbook
+  when: ansible_hostname == 'jenkins01'
+  block:
+    - name: Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - curl
+          - gnupg
+          - fontconfig
+          - openjdk-17-jre
+        update_cache: true
+
+    - name: Add Jenkins GPG apt key
+      ansible.builtin.apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        state: present
+
+    - name: Add Jenkins Repository
+      ansible.builtin.apt_repository:
+        repo: deb https://pkg.jenkins.io/debian-stable binary/
+        state: present
+
+    - name: Update apt and install jenkins
+      ansible.builtin.apt:
+        name:
+          - jenkins
+        update_cache: true
+      notify: Reboot lxc
