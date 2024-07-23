@@ -1,0 +1,2 @@
+#!/bin/bash
+echo "certbot-renewal-hooks-post: 10-haproxy" && systemctl start haproxy

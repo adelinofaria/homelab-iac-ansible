@@ -7,29 +7,122 @@
       ansible.builtin.include_role:
         name: lxc
 
+    - name: Download haproxy gpg key
+      ansible.builtin.get_url:
+        url: https://haproxy.debian.net/bernat.debian.org.gpg
+        dest: /usr/share/keyrings/haproxy.debian.net.asc
+        mode: 0644
+        force: true
+
+    - name: Add haproxy apt source
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64 signed-by=/usr/share/keyrings/haproxy.debian.net.asc] http://haproxy.debian.net bookworm-backports-3.0 main
+        state: present
+
     - name: Install required system packages
       ansible.builtin.apt:
         pkg:
           - curl
           - gnupg
+          - certbot
+          - python3-certbot-dns-cloudflare
+          - haproxy=3.0.*
         update_cache: true
 
-    - name: Add HAProxy GPG apt key
-      ansible.builtin.apt_key:
-        url: https://haproxy.debian.net/bernat.debian.org.gpg
-        state: present
+    # certbot configuration
 
-    - name: Add HAProxy Repository
-      ansible.builtin.apt_repository:
-        repo: deb http://haproxy.debian.net bookworm-backports-3.0 main
-        state: present
+    - name: Add certbot config to /etc/letsencrypt/cli.ini
+      ansible.builtin.blockinfile:
+        path: /etc/letsencrypt/cli.ini
+        block: |
+          # Use a 4096 bit RSA key instead of 2048
+          rsa-key-size = 4096
+          # Uncomment and update to register with the specified e-mail address
+          email = adelinofaria@me.com
+          # Or instead, perform the registration without email
+          #register-unsafely-without-email=true
+          # Uncomment and update to generate certificates for the specified domains.
+          domains=adelinofaria.me,*.adelinofaria.me
+          # Auto accept TOS
+          agree-tos=true
+          # Challenge config
+          preferred-challenges=dns
+          authenticator=dns-cloudflare
+          dns-cloudflare-credentials=/root/.secrets/certbot/cloudflare.ini
 
-    # - name: Update apt and install haproxy
-    #   ansible.builtin.apt:
-    #     name:
-    #       - haproxy=3.0.\*
-    #     update_cache: true
-    #   notify: Reboot lxc
+    - name: Create .secrets/certbot directory
+      ansible.builtin.file:
+        path: /root/.secrets/certbot
+        state: directory
+        mode: 0600
+        recurse: yes
 
-# install certbot and certbot-dns-cloudflare plugin
+    - name: Copy cloudflare.ini file
+      ansible.builtin.template:
+        src: templates/haproxy/cloudflare.ini.j2
+        dest: /root/.secrets/certbot/cloudflare.ini
+        mode: 0600
+      vars:
+        dns_cloudflare_api_token: "{{ vault_cf_api_token }}"
+
+    - name: Copy renewal-hooks-pre
+      ansible.builtin.copy:
+        src: files/haproxy/renewal-hooks/pre/10-haproxy
+        dest: /etc/letsencrypt/renewal-hooks/pre/10-haproxy
+        mode: 0700
+
+    - name: Copy renewal-hooks-post
+      ansible.builtin.copy:
+        src: files/haproxy/renewal-hooks/post/10-haproxy
+        dest: /etc/letsencrypt/renewal-hooks/post/10-haproxy
+        mode: 0700
+
+    - name: Copy renewal-hooks-deploy
+      ansible.builtin.copy:
+        src: files/haproxy/renewal-hooks/deploy/10-haproxy
+        dest: /etc/letsencrypt/renewal-hooks/deploy/10-haproxy
+        mode: 0700
+
+    # Run certbot
+
+    - name: Run certbot
+      ansible.builtin.command: certbot certonly -n
+      register: _cmd_certbot_certonly
+      changed_when: _cmd_certbot_certonly.stdout_lines[0] != "Certificate not yet due for renewal"
+
+    # Import certificates to haproxy
+
+    - name: Create /etc/haproxy/certs folder
+      ansible.builtin.file:
+        path: /etc/haproxy/certs
+        state: directory
+        mode: 0600
+
+    - name: Is cert installed
+      ansible.builtin.stat:
+        path: /etc/haproxy/certs/adelinofaria.me.pem
+      register: cert_file
+
+    - name: Install certificate
+      when: not cert_file.stat.exists
+      block:
+        - name: Run renewal-hooks/deploy/*
+          ansible.builtin.command: run-parts /etc/letsencrypt/renewal-hooks/deploy/
+          environment:
+            RENEWED_LINEAGE: /etc/letsencrypt/live/adelinofaria.me
+            RENEWED_DOMAINS: adelinofaria.me *.adelinofaria.me
+
+    - name: Copy haproxy.cfg
+      ansible.builtin.copy:
+        src: files/haproxy/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg
+        mode: 0644
+      register: copy_haproxy_cfg
+
+    - name: Restart haproxy service
+      when: (not cert_file.stat.exists) or copy_haproxy_cfg.changed
+      ansible.builtin.systemd_service:
+        name: haproxy
+        state: restarted
+
 # install fail2ban?

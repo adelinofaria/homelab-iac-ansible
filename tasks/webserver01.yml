@@ -83,7 +83,7 @@
     - name: Comment out the dns_cloudflare_email entry at dns-conf/cloudflare.ini
       ansible.builtin.replace:
         path: appdata/swag/dns-conf/cloudflare.ini
-        regexp: '^dns_cloudflare_email(\s+.*)?$'
+        regexp: '^dns_cloudflare_email\s+.*?$'
         replace: '#\1'
       notify:
         - Restart container
@@ -91,7 +91,7 @@
     - name: Comment out the dns_cloudflare_api_key entry at dns-conf/cloudflare.ini
       ansible.builtin.replace:
         path: appdata/swag/dns-conf/cloudflare.ini
-        regexp: '^dns_cloudflare_api_key(\s+.*)?$'
+        regexp: '^dns_cloudflare_api_key\s+.*?$'
         replace: '#\1'
       notify:
         - Restart container

@@ -24,7 +24,7 @@
         state: directory
         owner: pihole
         group: pihole
-        mode: '0775'
+        mode: 0775
 
     - name: Copy setupVars.conf with owner and permissions
       ansible.builtin.copy:
@@ -32,7 +32,7 @@
         dest: /etc/pihole/setupVars.conf
         owner: pihole
         group: pihole
-        mode: '0644'
+        mode: 0644
 
     # Instalation script
 
@@ -57,7 +57,7 @@
         dest: /etc/dnsmasq.d/99-edns.conf
         owner: pihole
         group: pihole
-        mode: '0644'
+        mode: 0644
       register: ednsconf_file
 
     - name: Copy custom.list with owner and permissions
@@ -66,7 +66,7 @@
         dest: /etc/pihole/custom.list
         owner: pihole
         group: pihole
-        mode: '0664'
+        mode: 0664
       register: customlist_file
 
     - name: Restart pihole
