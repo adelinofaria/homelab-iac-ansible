@@ -6,3 +6,20 @@
     - name: Import role lxc
       ansible.builtin.include_role:
         name: lxc
+
+    - name: Authelia - Download gpg key
+      ansible.builtin.get_url:
+        url: https://apt.authelia.com/organization/signing.asc
+        dest: /usr/share/keyrings/apt.authelia.com.asc
+        mode: 0644
+        force: true
+
+    - name: Authelia - Add apt source
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/apt.authelia.com.asc] https://apt.authelia.com/stable/debian/debian/ all main
+
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - authelia=4.38.*
+        update_cache: true
