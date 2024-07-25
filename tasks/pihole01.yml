@@ -30,8 +30,6 @@
       ansible.builtin.copy:
         src: files/pihole/setupVars.conf
         dest: /etc/pihole/setupVars.conf
-        owner: pihole
-        group: pihole
         mode: 0644
 
     # Instalation script
@@ -55,8 +53,6 @@
       ansible.builtin.copy:
         src: files/pihole/99-edns.conf
         dest: /etc/dnsmasq.d/99-edns.conf
-        owner: pihole
-        group: pihole
         mode: 0644
       register: ednsconf_file
 
@@ -64,11 +60,18 @@
       ansible.builtin.copy:
         src: files/pihole/custom.list
         dest: /etc/pihole/custom.list
+        mode: 0644
+      register: customlist_file
+
+    - name: Copy pihole-FTL.conf with owner and permissions
+      ansible.builtin.copy:
+        src: files/pihole/pihole-FTL.conf
+        dest: /etc/pihole/pihole-FTL.conf
         owner: pihole
         group: pihole
         mode: 0664
-      register: customlist_file
+      register: piholeftl_file
 
     - name: Restart pihole
+      when: ednsconf_file.changed or customlist_file.changed or piholeftl_file.changed
       ansible.builtin.command: pihole restartdns
-      when: ednsconf_file.changed or customlist_file.changed
