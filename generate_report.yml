@@ -42,7 +42,7 @@
 
     - name: Sort csv file content
       ansible.builtin.copy:
-        content: "{{ lookup('ansible.builtin.file', './reports/hosts_facts.csv').splitlines() | sort | join('\n') }}"
+        content: "{{ lookup('ansible.builtin.file', './reports/hosts_facts.csv').splitlines() | community.general.version_sort | join('\n') }}"
         dest: ./reports/hosts_facts.csv
         mode: '0644'
       delegate_to: localhost
