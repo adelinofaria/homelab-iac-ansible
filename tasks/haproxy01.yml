@@ -7,14 +7,14 @@
       ansible.builtin.include_role:
         name: lxc
 
-    - name: Download haproxy gpg key
+    - name: HAProxy - Download gpg key
       ansible.builtin.get_url:
         url: https://haproxy.debian.net/bernat.debian.org.gpg
         dest: /usr/share/keyrings/haproxy.debian.net.asc
         mode: 0644
         force: true
 
-    - name: Add haproxy apt source
+    - name: HAProxy - Add apt source
       ansible.builtin.apt_repository:
         repo: deb [arch=amd64 signed-by=/usr/share/keyrings/haproxy.debian.net.asc] http://haproxy.debian.net bookworm-backports-3.0 main
         state: present
@@ -22,6 +22,8 @@
     - name: Install required system packages
       ansible.builtin.apt:
         pkg:
+          - git
+          - lua-json
           - rsyslog-gnutls
           - certbot
           - python3-certbot-dns-cloudflare
@@ -117,6 +119,20 @@
         dest: /etc/haproxy/haproxy.cfg
         mode: 0644
       register: copy_haproxy_cfg
+
+    - name: Create /usr/share/haproxy directory
+      ansible.builtin.file:
+        path: /usr/share/haproxy
+        state: directory
+        mode: 0755
+
+    - name: Clone haproxy-auth-request into /usr/share/haproxy
+      ansible.builtin.git:
+        repo: https://github.com/TimWolla/haproxy-auth-request.git
+        dest: /usr/share/haproxy/haproxy-auth-request
+        accept_newhostkey: true
+        single_branch: true
+        version: main
 
     - name: Restart haproxy service
       when: (not cert_file.stat.exists) or copy_haproxy_cfg.changed
