@@ -22,8 +22,7 @@
     - name: Install required system packages
       ansible.builtin.apt:
         pkg:
-          - curl
-          - gnupg
+          - rsyslog-gnutls
           - certbot
           - python3-certbot-dns-cloudflare
           - haproxy=3.0.*
@@ -123,6 +122,19 @@
       when: (not cert_file.stat.exists) or copy_haproxy_cfg.changed
       ansible.builtin.systemd_service:
         name: haproxy
+        state: restarted
+
+    - name: Update /etc/rsyslog.d/49-haproxy.conf to forward logs to logs01:514 using TCP
+      ansible.builtin.blockinfile:
+        path: /etc/rsyslog.d/49-haproxy.conf
+        insertafter: '  /var/log/haproxy.log'
+        block: "  *.* @@192.168.1.16"
+      register: rsyslog_49_haproxy_conf
+
+    - name: Restart rsyslog service
+      when: rsyslog_49_haproxy_conf.changed
+      ansible.builtin.systemd_service:
+        name: rsyslog
         state: restarted
 
 # install fail2ban?
