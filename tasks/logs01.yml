@@ -1,0 +1,106 @@
+---
+# file: tasks/logs01.yml
+- name: Running logs01.yml playbook
+  when: ansible_hostname == 'logs01'
+  block:
+    - name: Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: OpenSearch - Download gpg key
+      ansible.builtin.get_url:
+        url: https://artifacts.opensearch.org/publickeys/opensearch.pgp
+        dest: /usr/share/keyrings/artifacts.opensearch.org.asc
+        mode: 0644
+        force: true
+
+    - name: OpenSearch - Add apt source
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/artifacts.opensearch.org.asc] https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/apt stable main
+
+    - name: MongoDB - Download gpg key
+      ansible.builtin.get_url:
+        url: https://www.mongodb.org/static/pgp/server-7.0.asc
+        dest: /usr/share/keyrings/mongodb-server-7.0.asc
+        mode: 0644
+        force: true
+
+    - name: MongoDB - Add apt source
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/mongodb-server-7.0.asc] http://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main
+
+    - name: Graylog - Download gpg key
+      ansible.builtin.get_url:
+        url: https://packages.graylog2.org/repo/debian/keyring.gpg
+        dest: /usr/share/keyrings/packages.graylog2.org.gpg
+        mode: 0644
+        force: true
+
+    - name: Graylog - Add apt source
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64 signed-by=/usr/share/keyrings/packages.graylog2.org.gpg] https://packages.graylog2.org/repo/debian/ stable 6.0
+
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - opensearch=2.15.*
+          - mongodb-org=7.0.*
+          - graylog-server=6.0.*
+        update_cache: true
+      environment:
+        OPENSEARCH_INITIAL_ADMIN_PASSWORD: bKgOZxXR2_0a-34X
+
+    - name: Disable TLS for opensearch
+      ansible.builtin.blockinfile:
+        path: /etc/opensearch/opensearch.yml
+        block: "plugins.security.disabled: true"
+
+    - name: Start opensearch service
+      ansible.builtin.systemd_service:
+        name: opensearch
+        enabled: true
+        state: started
+
+    - name: Start mongod service
+      ansible.builtin.systemd_service:
+        name: mongod
+        enabled: true
+        state: started
+
+    - name: Update graylog conf file with password_secret
+      ansible.builtin.replace:
+        path: /etc/graylog/server/server.conf
+        regexp: '^password_secret =$'
+        replace: "password_secret = {{ graylog_cluster_password_secret }}"
+
+    - name: Update graylog conf file with root_password_sha2
+      ansible.builtin.replace:
+        path: /etc/graylog/server/server.conf
+        regexp: '^root_password_sha2 =$'
+        replace: "root_password_sha2 = {{ graylog_root_password_sha2 }}"
+
+    - name: Update graylog conf file with http_bind_address
+      ansible.builtin.blockinfile:
+        path: /etc/graylog/server/server.conf
+        insertafter: '#http_bind_address = 127.0.0.1:9000'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK http_bind_address"
+        block: http_bind_address = 0.0.0.0
+
+    - name: Start graylog-server service
+      ansible.builtin.systemd_service:
+        name: graylog-server
+        enabled: true
+        state: started
+
+    - name: Pause for 10 seconds to startup service
+      ansible.builtin.pause:
+        seconds: 10
+
+    - name: Slurp
+      ansible.builtin.slurp:
+        src: /var/log/graylog-server/server.log
+      register: slurp_graylog_log
+
+    - name: Access the website and do the manual setup
+      ansible.builtin.debug:
+        msg: "{{ slurp_graylog_log['content'] | b64decode | regex_findall('Initial configuration is accessible at.*') | last }}"

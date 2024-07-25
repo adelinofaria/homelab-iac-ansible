@@ -8,18 +8,16 @@ unbound01 # -> updns01
 ddns01
 haproxy01
 webserver01
-# logs01
+logs01
 plex01
 jenkins01
 
 [kvm]
-# docker01
 homeassistant01
 
 [docker]
 ddns01
 webserver01
-# docker01
 
 # Operating Systems
 
@@ -32,6 +30,6 @@ pihole01
 unbound01
 haproxy01
 webserver01
-# docker01
+logs01
 plex01
 jenkins01
