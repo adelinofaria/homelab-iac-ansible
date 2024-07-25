@@ -23,3 +23,52 @@
         pkg:
           - authelia=4.38.*
         update_cache: true
+
+    - name: Copy configuration.yml file
+      ansible.builtin.template:
+        src: templates/authelia/configuration.yml.j2
+        dest: /etc/authelia/configuration.yml
+        mode: 0700
+      vars:
+        authelia_secret: "{{ vault_authelia_secret }}"
+        authelia_jwt_secret: "{{ vault_authelia_jwt_secret }}"
+        authelia_encryption_key: "{{ vault_authelia_encryption_key }}"
+      register: _authelia_copy_configuration_yml
+
+    - name: Update permissions for /config with +x
+      ansible.builtin.file:
+        path: /config
+        state: directory
+        mode: 0700
+
+    - name: Check if /config/users_database.yml exists
+      ansible.builtin.stat:
+        path: /config/users_database.yml
+      register:
+        _authelia_users_database_stat
+
+    - name: Touch yaml authelia users database
+      when: not _authelia_users_database_stat.stat.exists
+      ansible.builtin.file:
+        path: /config/users_database.yml
+        state: touch
+        mode: 0600
+
+    - name: Copy users_database.yml file
+      ansible.builtin.template:
+        src: templates/authelia/users_database.yml.j2
+        dest: /config/users_database.yml
+        mode: 0600
+      vars:
+        authelia_default_username: "{{ vault_authelia_default_username }}"
+        authelia_default_displayname: "{{ vault_authelia_default_displayname }}"
+        authelia_default_password: "{{ vault_authelia_default_password }}"
+        authelia_default_email: "{{ vault_authelia_default_email }}"
+      register: _authelia_copy_users_database_yml
+
+    - name: Restart authelia service
+      when: _authelia_copy_configuration_yml.changed or _authelia_copy_users_database_yml.changed
+      ansible.builtin.systemd_service:
+        name: authelia
+        enabled: true
+        state: restarted

@@ -1,0 +1,19 @@
+# yamllint disable rule:line-length
+---
+###############################################################
+#                         Users Database                      #
+###############################################################
+
+# This file can be used if you do not have an LDAP set up.
+
+users:
+  {{ authelia_default_username }}:
+    disabled: false
+    displayname: "{{ authelia_default_displayname }}"
+    password: "{{ authelia_default_password }}"
+    email: {{ authelia_default_email }}
+    groups:
+      - admins
+      - dev
+...
+# yamllint enable rule:line-length

@@ -138,6 +138,7 @@
       when: (not cert_file.stat.exists) or copy_haproxy_cfg.changed
       ansible.builtin.systemd_service:
         name: haproxy
+        enabled: true
         state: restarted
 
     - name: Update /etc/rsyslog.d/49-haproxy.conf to forward logs to logs01:514 using TCP

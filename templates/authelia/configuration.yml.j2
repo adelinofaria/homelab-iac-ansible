@@ -21,7 +21,7 @@
 # certificates_directory: '/config/certificates/'
 
 ## The theme to display: light, dark, grey, auto.
-# theme: 'light'
+theme: 'auto'
 
 ## Set the default 2FA method for new users and for when a user has a preferred method configured that has been
 ## disabled. This setting must be a method that is enabled.
@@ -31,7 +31,7 @@
 ##
 ## Server Configuration
 ##
-# server:
+server:
   ## The address for the Main server to listen on in the address common syntax.
   ## Formats:
   ##  - [<scheme>://]<hostname>[:<port>][/<path>]
@@ -94,7 +94,7 @@
 
   ## Server Endpoints configuration.
   ## This section is considered advanced and it SHOULD NOT be configured unless you've read the relevant documentation.
-  # endpoints:
+  endpoints:
     ## Enables the pprof endpoint.
     # enable_pprof: false
 
@@ -102,9 +102,9 @@
     # enable_expvars: false
 
     ## Configure the authz endpoints.
-    # authz:
-      # forward-auth:
-        # implementation: 'ForwardAuth'
+    authz:
+      forward-auth:
+        implementation: 'ForwardAuth'
         # authn_strategies: []
       # ext-authz:
         # implementation: 'ExtAuthz'
@@ -124,13 +124,13 @@ log:
   level: 'debug'
 
   ## Format the logs are written as: json, text.
-  # format: 'json'
+  format: 'json'
 
   ## File path where the logs will be written. If not set logs are written to stdout.
-  # file_path: '/config/authelia.log'
+  file_path: '/config/authelia.log'
 
   ## Whether to also log to stdout when a log_file_path is defined.
-  # keep_stdout: false
+  keep_stdout: true
 
 ##
 ## Telemetry Configuration
@@ -183,46 +183,46 @@ totp:
   disable: false
 
   ## The issuer name displayed in the Authenticator application of your choice.
-  # issuer: 'authelia.com'
+  issuer: 'adelinofaria.me'
 
   ## The TOTP algorithm to use.
   ## It is CRITICAL you read the documentation before changing this option:
   ## https://www.authelia.com/c/totp#algorithm
-  # algorithm: 'SHA1'
+  algorithm: 'SHA1'
 
   ## The number of digits a user has to input. Must either be 6 or 8.
   ## Changing this option only affects newly generated TOTP configurations.
   ## It is CRITICAL you read the documentation before changing this option:
   ## https://www.authelia.com/c/totp#digits
-  # digits: 6
+  digits: 6
 
   ## The period in seconds a Time-based One-Time Password is valid for.
   ## Changing this option only affects newly generated TOTP configurations.
-  # period: 30
+  period: 30
 
   ## The skew controls number of Time-based One-Time Passwords either side of the current one that are valid.
   ## Warning: before changing skew read the docs link below.
-  # skew: 1
+  skew: 1
   ## See: https://www.authelia.com/c/totp#input-validation to read
   ## the documentation.
 
   ## The size of the generated shared secrets. Default is 32 and is sufficient in most use cases, minimum is 20.
-  # secret_size: 32
+  secret_size: 32
 
   ## The allowed algorithms for a user to pick from.
-  # allowed_algorithms:
-  # - 'SHA1'
+  allowed_algorithms:
+  - 'SHA1'
 
   ## The allowed digits for a user to pick from.
-  # allowed_digits:
-  # - 6
+  allowed_digits:
+  - 6
 
   ## The allowed periods for a user to pick from.
-  # allowed_periods:
-  # - 30
+  allowed_periods:
+  - 30
 
   ## Disable the reuse security policy which prevents replays of one-time password code values.
-  # disable_reuse_security_policy: false
+  disable_reuse_security_policy: false
 
 ##
 ## WebAuthn Configuration
@@ -274,7 +274,7 @@ identity_validation:
     # jwt_algorithm: 'HS256'
 
     ## The secret key used to sign and verify the JWT.
-    jwt_secret: 'a_very_important_secret'
+    jwt_secret: "{{ authelia_jwt_secret }}" # 'a_very_important_secret'
 
   ## Elevated Session flows. Adjusts the flow which require elevated sessions for example managing credentials, adding,
   ## removing, etc.
@@ -333,7 +333,7 @@ authentication_backend:
   ## Password Reset Options.
   password_reset:
     ## Disable both the HTML element and the API for reset password functionality.
-    disable: false
+    disable: true
 
     ## External reset password url that redirects the user to an external reset portal. This disables the internal reset
     ## functionality.
@@ -506,38 +506,38 @@ authentication_backend:
   ##
   ## Important: Kubernetes (or HA) users must read https://www.authelia.com/t/statelessness
   ##
-  # file:
-    # path: '/config/users_database.yml'
-    # watch: false
-    # search:
-      # email: false
-      # case_insensitive: false
-    # password:
-      # algorithm: 'argon2'
-      # argon2:
-        # variant: 'argon2id'
-        # iterations: 3
-        # memory: 65536
-        # parallelism: 4
-        # key_length: 32
-        # salt_length: 16
-      # scrypt:
-        # iterations: 16
-        # block_size: 8
-        # parallelism: 1
-        # key_length: 32
-        # salt_length: 16
-      # pbkdf2:
-        # variant: 'sha512'
-        # iterations: 310000
-        # salt_length: 16
-      # sha2crypt:
-        # variant: 'sha512'
-        # iterations: 50000
-        # salt_length: 16
-      # bcrypt:
-        # variant: 'standard'
-        # cost: 12
+  file:
+    path: '/config/users_database.yml'
+    watch: false
+    search:
+      email: false
+      case_insensitive: false
+    password:
+      algorithm: 'argon2'
+      argon2:
+        variant: 'argon2id'
+        iterations: 3
+        memory: 65536
+        parallelism: 4
+        key_length: 32
+        salt_length: 16
+      scrypt:
+        iterations: 16
+        block_size: 8
+        parallelism: 1
+        key_length: 32
+        salt_length: 16
+      pbkdf2:
+        variant: 'sha512'
+        iterations: 310000
+        salt_length: 16
+      sha2crypt:
+        variant: 'sha512'
+        iterations: 50000
+        salt_length: 16
+      bcrypt:
+        variant: 'standard'
+        cost: 12
 
 ##
 ## Password Policy Configuration.
@@ -630,7 +630,11 @@ access_control:
     # - name: 'VPN'
     #   networks: '10.9.0.0/16'
 
-  # rules:
+  rules:
+    - domain: '*.adelinofaria.me'
+      policy: 'two_factor'
+    - domain: 'status.adelinofaria.me'
+      policy: 'one_factor'
     ## Rules applied to everyone
     # - domain: 'public.example.com'
     #   policy: 'bypass'
@@ -714,18 +718,18 @@ access_control:
 session:
   ## The secret to encrypt the session data. This is only used with Redis / Redis Sentinel.
   ## Secret can also be set using a secret: https://www.authelia.com/c/secrets
-  secret: 'insecure_session_secret'
+  secret: "{{ authelia_secret }}" # 'insecure_session_secret'
 
   ## Cookies configures the list of allowed cookie domains for sessions to be created on.
   ## Undefined values will default to the values below.
-  # cookies:
-  #   -
+  cookies:
+    -
       ## The name of the session cookie.
-      # name: 'authelia_session'
+      name: 'authelia_session'
 
       ## The domain to protect.
       ## Note: the Authelia portal must also be in that domain.
-      # domain: 'example.com'
+      domain: 'adelinofaria.me'
 
       ## Required. The fully qualified URI of the portal to redirect users to on proxies that support redirections.
       ## Rules:
@@ -733,7 +737,7 @@ session:
       ##   - The above 'domain' option MUST either:
       ##      - Match the host portion of this URI.
       ##      - Match the suffix of the host portion when prefixed with '.'.
-      # authelia_url: 'https://auth.example.com'
+      authelia_url: 'https://auth.adelinofaria.me'
 
       ## Optional. The fully qualified URI used as the redirection location if the portal is accessed directly. Not
       ## configuring this option disables the automatic redirection behaviour.
@@ -751,7 +755,7 @@ session:
 
       ## Sets the Cookie SameSite value. Possible options are none, lax, or strict.
       ## Please read https://www.authelia.com/c/session#same_site
-      # same_site: 'lax'
+      same_site: 'lax'
 
       ## The value for inactivity, expiration, and remember_me are in seconds or the duration common syntax.
       ## All three of these values affect the cookie/session validity period. Longer periods are considered less secure
@@ -760,16 +764,16 @@ session:
       ## The inactivity time before the session is reset. If expiration is set to 1h, and this is set to 5m, if the user
       ## does not select the remember me option their session will get destroyed after 1h, or after 5m since the last
       ## time Authelia detected user activity.
-      # inactivity: '5 minutes'
+      inactivity: '5 minutes'
 
       ## The time before the session cookie expires and the session is destroyed if remember me IS NOT selected by the
       ## user.
-      # expiration: '1 hour'
+      expiration: '1 hour'
 
       ## The time before the cookie expires and the session is destroyed if remember me IS selected by the user. Setting
       ## this value to -1 disables remember me for this session cookie domain. If allowed and the user uses the remember
       ## me checkbox this overrides the expiration option and disables the inactivity option.
-      # remember_me: '1 month'
+      remember_me: '1 month'
 
   ## Cookie Session Domain default 'name' value.
   name: 'authelia_session'
@@ -881,26 +885,26 @@ session:
 ##
 ## This mechanism prevents attackers from brute forcing the first factor. It bans the user if too many attempts are made
 ## in a short period of time.
-# regulation:
+regulation:
   ## The number of failed login attempts before user is banned. Set it to 0 to disable regulation.
-  # max_retries: 3
+  max_retries: 3
 
   ## The time range during which the user can attempt login before being banned in the duration common syntax. The user
   ## is banned if the authentication failed 'max_retries' times in a 'find_time' seconds window.
-  # find_time: '2 minutes'
+  find_time: '5 minutes'
 
   ## The length of time before a banned user can login again in the duration common syntax.
-  # ban_time: '5 minutes'
+  ban_time: '15 minutes'
 
 ##
 ## Storage Provider Configuration
 ##
 ## The available providers are: `local`, `mysql`, `postgres`. You must use one and only one of these providers.
-# storage:
+storage:
   ## The encryption key that is used to encrypt sensitive information in the database. Must be a string with a minimum
   ## length of 20. Please see the docs if you configure this with an undesirable key and need to change it, you MUST use
   ## the CLI to change this in the database if you want to change it from a previously configured value.
-  # encryption_key: 'you_must_generate_a_random_string_of_more_than_twenty_chars_and_configure_this'
+  encryption_key: "{{ authelia_encryption_key }}" # 'you_must_generate_a_random_string_of_more_than_twenty_chars_and_configure_this'
 
   ##
   ## Local (Storage Provider)
@@ -910,9 +914,9 @@ session:
   ##
   ## Important: Kubernetes (or HA) users must read https://www.authelia.com/t/statelessness
   ##
-  # local:
+  local:
     ## Path to the SQLite3 Database.
-    # path: '/config/db.sqlite3'
+    path: '/config/db.sqlite3'
 
   ##
   ## MySQL / MariaDB (Storage Provider)
@@ -1051,8 +1055,8 @@ notifier:
   ##
   ## Important: Kubernetes (or HA) users must read https://www.authelia.com/t/statelessness
   ##
-  # filesystem:
-    # filename: '/config/notification.txt'
+  filesystem:
+    filename: '/config/notification.txt'
 
   ##
   ## SMTP (Notification Provider)
@@ -1415,4 +1419,3 @@ notifier:
               # -----BEGIN CERTIFICATE-----
               # ...
               # -----END CERTIFICATE-----
-...
