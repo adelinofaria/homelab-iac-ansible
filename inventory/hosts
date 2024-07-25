@@ -7,6 +7,7 @@ pihole01 # -> dns01
 unbound01 # -> updns01
 ddns01
 haproxy01
+auth01
 webserver01
 logs01
 plex01
@@ -29,6 +30,7 @@ pve01
 pihole01
 unbound01
 haproxy01
+auth01
 webserver01
 logs01
 plex01

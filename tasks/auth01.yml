@@ -1,0 +1,8 @@
+---
+# file: tasks/auth01.yml
+- name: Running auth01.yml playbook
+  when: ansible_hostname == 'auth01'
+  block:
+    - name: Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
