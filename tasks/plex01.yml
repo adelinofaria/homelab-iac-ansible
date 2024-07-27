@@ -14,12 +14,12 @@
           - gnupg
         update_cache: true
 
-    - name: Add Plex GPG apt Key
+    - name: Ples - Download gpg key
       ansible.builtin.apt_key:
         url: https://downloads.plex.tv/plex-keys/PlexSign.key
         state: present
 
-    - name: Add Plex Repository
+    - name: Ples - Add apt source
       ansible.builtin.apt_repository:
         repo: deb https://downloads.plex.tv/repo/deb public main
         state: present

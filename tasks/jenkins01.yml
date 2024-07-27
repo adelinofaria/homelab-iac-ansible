@@ -16,17 +16,17 @@
           - openjdk-17-jre
         update_cache: true
 
-    - name: Add Jenkins GPG apt key
+    - name: Jenkins - Download gpg key
       ansible.builtin.apt_key:
         url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
         state: present
 
-    - name: Add Jenkins Repository
+    - name: Jenkins - Add apt source
       ansible.builtin.apt_repository:
         repo: deb https://pkg.jenkins.io/debian-stable binary/
         state: present
 
-    - name: Update apt and install jenkins
+    - name: Update apt and install
       ansible.builtin.apt:
         name:
           - jenkins

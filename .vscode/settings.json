@@ -1,3 +1,10 @@
 {
-    "ansible.python.interpreterPath": "/Users/adelinofaria/.pyenv/shims/python"
+    "ansible.python.interpreterPath": "/Users/adelinofaria/.pyenv/shims/python",
+    "spellright.language": [
+        "en"
+    ],
+    "spellright.documentTypes": [
+        "markdown",
+        "latex"
+    ]
 }
