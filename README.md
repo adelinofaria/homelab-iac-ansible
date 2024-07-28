@@ -49,3 +49,12 @@ ansible-playbook csv_export.yml -i inventory
 
 ## Test connections
 ```ansible all -m ping```
+
+## Add a new host steps
+1. Create entry at inventory/host_vars/host01/host01.yml
+2. Create task file at tasks/host01.yml
+3. Append host at inventory/hosts
+4. Append host at files/pihole/custom.list
+5. Run ```ansible-playbook create.yml -i inventory --limit pve01,host01```
+6. (optional) Append routes for host01 at files/haproxy/haproxy.cfg
+    1. Run ```ansible-playbook create.yml -i inventory --limit haproxy01```
