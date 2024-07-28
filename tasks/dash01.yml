@@ -1,0 +1,32 @@
+---
+# file: tasks/dash01.yml
+- name: Running dash01.yml playbook
+  when: ansible_hostname == 'dash01'
+  block:
+    - name: Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Grafana - Download gpg key
+      ansible.builtin.get_url:
+        url: https://apt.grafana.com/gpg.key
+        dest: /usr/share/keyrings/apt.grafana.com.asc
+        mode: 0644
+        force: true
+
+    - name: Grafana - Add apt source
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/apt.grafana.com.asc] https://apt.grafana.com stable main
+
+    - name: Update apt and install
+      ansible.builtin.apt:
+        name:
+          - grafana
+        update_cache: true
+      notify: Reboot lxc
+
+    - name: Grafana - Start service
+      ansible.builtin.systemd_service:
+        name: grafana-server
+        enabled: true
+        state: started

@@ -10,6 +10,7 @@ haproxy01
 auth01
 webserver01
 logs01
+dash01
 plex01
 jenkins01
 
@@ -33,5 +34,6 @@ haproxy01
 auth01
 webserver01
 logs01
+dash01
 plex01
 jenkins01
