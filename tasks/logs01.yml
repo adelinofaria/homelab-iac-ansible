@@ -50,6 +50,24 @@
       environment:
         OPENSEARCH_INITIAL_ADMIN_PASSWORD: bKgOZxXR2_0a-34X
 
+    - name: Update opensearch.yml file with host wildcard
+      ansible.builtin.replace:
+        path: /etc/opensearch/opensearch.yml
+        regexp: '^#network.host: 192.168.0.1$'
+        replace: "network.host: 0.0.0.0"
+
+    - name: Update opensearch.yml file with host port
+      ansible.builtin.replace:
+        path: /etc/opensearch/opensearch.yml
+        regexp: '^#http.port: 9200$'
+        replace: "http.port: 9200"
+
+    - name: Update opensearch.yml file with seed_hosts
+      ansible.builtin.replace:
+        path: /etc/opensearch/opensearch.yml
+        regexp: '^#discovery.seed_hosts: \["host1", "host2"]$'
+        replace: "discovery.seed_hosts: [0.0.0.0]"
+
     - name: Disable TLS for opensearch
       ansible.builtin.blockinfile:
         path: /etc/opensearch/opensearch.yml
