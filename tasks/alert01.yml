@@ -1,0 +1,36 @@
+---
+# file: tasks/alert01.yml
+- name: Running alert01.yml playbook
+  when: ansible_hostname == 'alert01'
+  block:
+    - name: Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Prometheus - Update apt and install
+      ansible.builtin.apt:
+        name:
+          - prometheus
+        update_cache: true
+      notify: Reboot lxc
+
+    - name: Copy prometheus.yml file
+      ansible.builtin.template:
+        src: templates/prometheus/prometheus.yml.j2
+        dest: /etc/prometheus/prometheus.yml
+        mode: 0644
+      vars:
+        prometheus_node_targets: "{{ hostvars | dict2items | map(attribute='value.ansible_host') | list | product([':9100']) | map('join') | list | join(',') }}"
+      register: _prometheus_copy_prometheus_yml
+
+    - name: Prometheus - Restart service
+      when: _prometheus_copy_prometheus_yml.changed
+      ansible.builtin.systemd_service:
+        name: prometheus
+        enabled: true
+        state: restarted
+
+    # - name: Debug
+    #   ansible.builtin.debug:
+    #     msg:
+    #       - "{{ hostvars | dict2items | map(attribute='value.ansible_host') | list | product([':9100']) | map('join') | list | join(',') }}"

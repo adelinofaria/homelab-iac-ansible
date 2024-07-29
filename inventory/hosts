@@ -11,6 +11,7 @@ auth01
 webserver01
 logs01
 dash01
+alert01
 plex01
 jenkins01
 
@@ -35,5 +36,6 @@ auth01
 webserver01
 logs01
 dash01
+alert01
 plex01
 jenkins01
