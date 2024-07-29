@@ -1,9 +1,15 @@
 ---
 # file: roles/lxc/tasks/main.yml
+
+# systemctl status systemd-logind.service
+# systemctl mask systemd-logind.service
 - name: Mask systemd-logind service due some internal errors is delaying ssh session login
   ansible.builtin.systemd_service:
     name: systemd-logind
     masked: true
 
-# systemctl status systemd-logind.service
-# systemctl mask systemd-logind.service
+- name: Install Prometheus's node_exporter
+  ansible.builtin.apt:
+    name:
+      - prometheus-node-exporter
+    update_cache: true
