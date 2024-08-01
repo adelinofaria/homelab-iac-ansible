@@ -139,23 +139,41 @@
 # Graylog Pipeline configuration
 
 # Step 0
+# Rule: 1.1 HAProxy raw syslog grok pattern
 # if
 # Message has field 'message'
 # Check if value in 'message' is a not_null
 # Check if value in 'message' is a string
 # then
-# Match grok on field 'message' - %{SYSLOGHOST:syslog_host} %{SYSLOGPROG:syslog_program}:
-# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: (?<client>%{IP:client_ip}:%{POSINT:client_port}) \\[%{NOTSPACE:accept_date}\\] (%{NOTSPACE:frontend_name}: %{GREEDYDATA:frontend_error}|%{NOTSPACE:frontend_name})
-# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:backend_name}/%{NOTSPACE:backend_server}
-# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:timings} \\+?%{NONNEGINT:bytes_read:long} %{NOTSPACE:termination_state} %{NOTSPACE:connection} %{NOTSPACE:queue}
-# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:timings} %{INT:http_status_code:short} \\+?%{NONNEGINT:bytes_read:long} %{DATA:captured_request_cookie} %{DATA:captured_response_cookie} %{NOTSPACE:termination_state} %{NOTSPACE:connection} %{NOTSPACE:queue}
-# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE}( \\{%{DATA:captured_request_headers}\\})?( \\{%{DATA:captured_response_headers}\\})? \"%{DATA:http_request}\"
+# Match grok on field 'message' - %{SYSLOGHOST:syslog_host} %{SYSLOGPROG:syslog_program}: %{GREEDYDATA:syslog_message}
+
+# Step 1
+# Rule: 2.1 HAProxy syslog_message grok pattern
+# if
+# Message has field 'syslog_message'
+# Check if value in 'syslog_message' is a not_null
+# Check if value in 'syslog_message' is a string
+# then
+# Match grok on field 'syslog_message' - (?<client>%{IP:client_ip}:%{POSINT:client_port}) \\[%{NOTSPACE:accept_date_string}\\] (%{NOTSPACE:frontend_name}: %{GREEDYDATA:frontend_error}|%{NOTSPACE:frontend_name})
+# Match grok on field 'syslog_message' - %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:backend_name}/%{NOTSPACE:backend_server}
+# Match grok on field 'syslog_message' - %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:timings} \\+?%{NONNEGINT:bytes_read:long} %{NOTSPACE:termination_state} %{NOTSPACE:connection} %{NOTSPACE:queue}
+# Match grok on field 'syslog_message' - %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:timings} %{INT:http_status_code:short} \\+?%{NONNEGINT:bytes_read:long} %{DATA:captured_request_cookie} %{DATA:captured_response_cookie} %{NOTSPACE:termination_state} %{NOTSPACE:connection} %{NOTSPACE:queue}
+# Match grok on field 'syslog_message' - %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE}( \\{%{DATA:captured_request_headers}\\})?( \\{%{DATA:captured_response_headers}\\})? \"%{DATA:http_request}\"
+
+
+# Step 2
+# Rule: 3.1 HAProxy http_request grok pattern
+# if
+# Message has field 'http_request'
+# Check if value in 'http_request' is a not_null
+# Check if value in 'http_request' is a string
+# then
 # Match grok on field 'http_request' - %{WORD:http_method} %{NOTSPACE:http_uri} HTTP/%{NUMBER:http_version}
 
 
-# Step 1
+# Step 3
 # Code rule
-# rule "HAProxy HTTP accept_date conversion"
+# rule "4.1 HAProxy accept_date conversion"
 # when
 #   has_field(
 #     field : "accept_date"
@@ -171,7 +189,7 @@
 # end
 
 # Code rule
-# rule "HAProxy HTTP client_ip conversion"
+# rule "4.2 HAProxy client_ip conversion"
 # when
 #   has_field(
 #     field : "client_ip"
@@ -186,8 +204,10 @@
 #     });
 # end
 
+# Rule: 4.3 HAProxy http_uri grok matching
 # if
 # Message has field 'http_uri'
+# Check if value in 'http_uri' is a not_null
 # Check if value in 'http_uri' is a string
 # then
 # Match grok on field 'http_uri' - (?:%{URIPROTO:http_uri_proto}://)?(?:%{USER:http_uri_user}(?::[^@]*)?@)?(?<http_uri_host>%{IPORHOST}(?::%{POSINT})?)?(?<http_uri_path_param>%{URIPATH:http_uri_path}(?:%{URIPARAM:http_uri_param})?)?
