@@ -1,7 +1,7 @@
 ---
 # file: inventory/host_vars/homeassistant01.yml
 ansible_host: 192.168.1.24
-ansible_user: debian
+ansible_user: root
 node: pve01
 vmid: 300
 cores: 2

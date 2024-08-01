@@ -75,7 +75,8 @@
         memory: "{{ proxmox_lxc_memory }}"
         swap: "{{ proxmox_lxc_swap }}"
         storage: "{{ proxmox_lxc_storage }}"
-        mounts: "{{ proxmox_lxc_mounts }}"
+        # mounts: "{{ proxmox_lxc_mounts }}" # need to convert to mount_volumes
+        # mount_volumes: "{{ proxmox_lxc_mount_volumes }}" # on 9.2.0 - these fields are totally bugged, leaving this here for the time being til fix
         netif:
           net0: "name={{ proxmox_lxc_netif_net0_name }},hwaddr={{ proxmox_lxc_netif_net0_hwaddr }},ip={{ proxmox_lxc_netif_net0_ip }},gw={{ proxmox_lxc_netif_net0_gw }},ip6={{ proxmox_lxc_netif_net0_ip6 }},gw6={{ proxmox_lxc_netif_net0_gw6 }},bridge={{ proxmox_lxc_netif_net0_bridge }}" # noqa: yaml[line-length]
         pubkey: "{{ proxmox_lxc_pubkey }}"

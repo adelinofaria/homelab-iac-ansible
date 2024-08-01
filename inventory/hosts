@@ -25,11 +25,12 @@ webserver01
 # Operating Systems
 
 [alpine]
-ddns01
+homeassistant01
 
 [debian]
 pve01
 pihole01
+ddns01
 unbound01
 haproxy01
 auth01
