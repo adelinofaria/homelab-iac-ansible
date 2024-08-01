@@ -134,3 +134,60 @@
     - name: Access the website and do the manual setup
       ansible.builtin.debug:
         msg: "{{ slurp_graylog_log['content'] | b64decode | regex_findall('Initial configuration is accessible at.*') | last }}"
+
+
+# Graylog Pipeline configuration
+
+# Step 0
+# if
+# Message has field 'message'
+# Check if value in 'message' is a not_null
+# Check if value in 'message' is a string
+# then
+# Match grok on field 'message' - %{SYSLOGHOST:syslog_host} %{SYSLOGPROG:syslog_program}:
+# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: (?<client>%{IP:client_ip}:%{POSINT:client_port}) \\[%{NOTSPACE:accept_date}\\] (%{NOTSPACE:frontend_name}: %{GREEDYDATA:frontend_error}|%{NOTSPACE:frontend_name})
+# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:backend_name}/%{NOTSPACE:backend_server}
+# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:timings} \\+?%{NONNEGINT:bytes_read:long} %{NOTSPACE:termination_state} %{NOTSPACE:connection} %{NOTSPACE:queue}
+# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:timings} %{INT:http_status_code:short} \\+?%{NONNEGINT:bytes_read:long} %{DATA:captured_request_cookie} %{DATA:captured_response_cookie} %{NOTSPACE:termination_state} %{NOTSPACE:connection} %{NOTSPACE:queue}
+# Match grok on field 'message' - %{NOTSPACE} %{NOTSPACE}: %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE}( \\{%{DATA:captured_request_headers}\\})?( \\{%{DATA:captured_response_headers}\\})? \"%{DATA:http_request}\"
+# Match grok on field 'http_request' - %{WORD:http_method} %{NOTSPACE:http_uri} HTTP/%{NUMBER:http_version}
+
+
+# Step 1
+# Code rule
+# rule "HAProxy HTTP accept_date conversion"
+# when
+#   has_field(
+#     field : "accept_date"
+#   )
+#   AND
+#   is_string($message."accept_date")
+# then
+#   let output_1 = parse_date(to_string($message."accept_date"), "dd/MMM/yyyy:HH:mm:ss.SSS");
+#   set_field(
+#     field : "accept_date",
+#     value : output_1
+#   );
+# end
+
+# Code rule
+# rule "HAProxy HTTP client_ip conversion"
+# when
+#   has_field(
+#     field : "client_ip"
+#   )
+#   AND
+#   is_string($message."client_ip")
+# then
+#   let output_1 = to_ip($message."client_ip");
+#   set_fields({
+#         client_ip: output_1,
+#         client_ip_anon: output_1.anonymized
+#     });
+# end
+
+# if
+# Message has field 'http_uri'
+# Check if value in 'http_uri' is a string
+# then
+# Match grok on field 'http_uri' - (?:%{URIPROTO:http_uri_proto}://)?(?:%{USER:http_uri_user}(?::[^@]*)?@)?(?<http_uri_host>%{IPORHOST}(?::%{POSINT})?)?(?<http_uri_path_param>%{URIPATH:http_uri_path}(?:%{URIPARAM:http_uri_param})?)?
