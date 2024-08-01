@@ -11,8 +11,16 @@
       ansible.builtin.apt:
         name:
           - prometheus
+          - prometheus-alertmanager
         update_cache: true
       notify: Reboot lxc
+
+    - name: Copy custom_rules.yml
+      ansible.builtin.copy:
+        src: files/prometheus/custom_rules.yml
+        dest: /etc/prometheus/custom_rules.yml
+        mode: 0644
+      register: _prometheus_copy_custom_rules_yml
 
     - name: Copy prometheus.yml file
       ansible.builtin.template:
@@ -20,17 +28,29 @@
         dest: /etc/prometheus/prometheus.yml
         mode: 0644
       vars:
-        prometheus_node_targets: "{{ hostvars | dict2items | map(attribute='value.ansible_host') | list | product([':9100']) | map('join') | list | join(',') }}"
+        prometheus_node_targets: "{{ hostvars | dict2items | map(attribute='key') | list | product([':9100']) | map('join') | list | join(',') }}"
       register: _prometheus_copy_prometheus_yml
 
+    - name: Copy alertmanager.yml file
+      ansible.builtin.template:
+        src: templates/prometheus/alertmanager.yml.j2
+        dest: /etc/prometheus/alertmanager.yml
+        mode: 0644
+      vars:
+        telegram_api_key: "{{ vault_telegram_api_key }}"
+        telegram_channel: "{{ vault_telegram_channel }}"
+      register: _prometheus_copy_alertmanager_yml
+
     - name: Prometheus - Restart service
-      when: _prometheus_copy_prometheus_yml.changed
+      when: _prometheus_copy_custom_rules_yml.changed or _prometheus_copy_prometheus_yml.changed
       ansible.builtin.systemd_service:
         name: prometheus
         enabled: true
         state: restarted
 
-    # - name: Debug
-    #   ansible.builtin.debug:
-    #     msg:
-    #       - "{{ hostvars | dict2items | map(attribute='value.ansible_host') | list | product([':9100']) | map('join') | list | join(',') }}"
+    - name: Prometheus AlertManager - Restart service
+      when: _prometheus_copy_alertmanager_yml.changed
+      ansible.builtin.systemd_service:
+        name: prometheus-alertmanager
+        enabled: true
+        state: restarted
