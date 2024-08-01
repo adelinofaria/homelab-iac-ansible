@@ -104,6 +104,18 @@
         marker: "# {mark} ANSIBLE MANAGED BLOCK http_bind_address"
         block: http_bind_address = 0.0.0.0
 
+    - name: Update graylog conf file with prometheus_exporter_enabled
+      ansible.builtin.replace:
+        path: /etc/graylog/server/server.conf
+        regexp: '^#prometheus_exporter_enabled = false$'
+        replace: "prometheus_exporter_enabled = true"
+
+    - name: Update graylog conf file with prometheus_exporter_bind_address
+      ansible.builtin.replace:
+        path: /etc/graylog/server/server.conf
+        regexp: '^#prometheus_exporter_bind_address = 127.0.0.1:9833$'
+        replace: "prometheus_exporter_bind_address = 0.0.0.0:9833"
+
     - name: Start graylog-server service
       ansible.builtin.systemd_service:
         name: graylog-server
