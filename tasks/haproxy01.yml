@@ -120,6 +120,13 @@
         mode: 0644
       register: copy_haproxy_cfg
 
+    - name: Copy trusted_proxies.src.acl
+      ansible.builtin.copy:
+        src: files/haproxy/trusted_proxies.src.acl
+        dest: /etc/haproxy/trusted_proxies.src.acl
+        mode: 0644
+      register: copy_trusted_proxies_src_acl
+
     - name: Create /usr/share/haproxy directory
       ansible.builtin.file:
         path: /usr/share/haproxy
@@ -135,7 +142,7 @@
         version: main
 
     - name: Restart haproxy service
-      when: (not cert_file.stat.exists) or copy_haproxy_cfg.changed
+      when: (not cert_file.stat.exists) or copy_haproxy_cfg.changed or copy_trusted_proxies_src_acl.changed
       ansible.builtin.systemd_service:
         name: haproxy
         enabled: true
