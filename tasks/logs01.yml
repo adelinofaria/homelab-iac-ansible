@@ -139,18 +139,17 @@
 # Graylog Pipeline configuration
 
 # Step 0
-# Rule: 1.1 HAProxy raw syslog grok pattern
+# Rule: 1.1 Syslog base
 # if
-# Message has field 'message'
 # Check if value in 'message' is a not_null
 # Check if value in 'message' is a string
 # then
-# Match grok on field 'message' - %{SYSLOGHOST:syslog_host} %{SYSLOGPROG:syslog_program}: %{GREEDYDATA:syslog_message}
+# Match grok on field 'message' - %{SYSLOGHOST:syslog_host} (?<syslog_program>%{PROG:syslog_program_name}(?:\\[%{POSINT:syslog_program_pid}\\])?): %{GREEDYDATA:syslog_message}
 
 # Step 1
-# Rule: 2.1 HAProxy syslog_message grok pattern
+# Rule: 2.1 HAProxy syslog_message
 # if
-# Message has field 'syslog_message'
+# Field 'syslog_program_name' equals 'haproxy'
 # Check if value in 'syslog_message' is a not_null
 # Check if value in 'syslog_message' is a string
 # then
@@ -160,11 +159,24 @@
 # Match grok on field 'syslog_message' - %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE:timings} %{INT:http_status_code:short} \\+?%{NONNEGINT:bytes_read:long} %{DATA:captured_request_cookie} %{DATA:captured_response_cookie} %{NOTSPACE:termination_state} %{NOTSPACE:connection} %{NOTSPACE:queue}
 # Match grok on field 'syslog_message' - %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE}( \\{%{DATA:captured_request_headers}\\})?( \\{%{DATA:captured_response_headers}\\})? \"%{DATA:http_request}\"
 
+# Code rule
+# rule "2.2 Authelia syslog_message"
+# when
+#   ( has_field("syslog_program_name") && to_string($message."syslog_program_name") == "authelia" )
+#   AND
+#   is_not_null($message."syslog_message")
+#   AND
+#   is_string($message."syslog_message")
+# then
+#   let gl2_fragment_extractor_1722336381350 = parse_json(to_string($message."syslog_message"));
+#   set_fields(to_map(gl2_fragment_extractor_1722336381350), "authelia_");
+# end
+
 
 # Step 2
-# Rule: 3.1 HAProxy http_request grok pattern
+# Rule: 3.1 HAProxy http_request
 # if
-# Message has field 'http_request'
+# Field 'syslog_program_name' equals 'haproxy'
 # Check if value in 'http_request' is a not_null
 # Check if value in 'http_request' is a string
 # then
@@ -173,27 +185,11 @@
 
 # Step 3
 # Code rule
-# rule "4.1 HAProxy accept_date conversion"
+# rule "4.1 HAProxy client_ip"
 # when
-#   has_field(
-#     field : "accept_date"
-#   )
+#   ( has_field("syslog_program_name") && to_string($message."syslog_program_name") == "haproxy" )
 #   AND
-#   is_string($message."accept_date")
-# then
-#   let output_1 = parse_date(to_string($message."accept_date"), "dd/MMM/yyyy:HH:mm:ss.SSS");
-#   set_field(
-#     field : "accept_date",
-#     value : output_1
-#   );
-# end
-
-# Code rule
-# rule "4.2 HAProxy client_ip conversion"
-# when
-#   has_field(
-#     field : "client_ip"
-#   )
+#   is_not_null($message."client_ip")
 #   AND
 #   is_string($message."client_ip")
 # then
@@ -204,9 +200,39 @@
 #     });
 # end
 
-# Rule: 4.3 HAProxy http_uri grok matching
+# Code rule
+# rule "4.2 HAProxy accept_date_string"
+# when
+#   ( has_field("syslog_program_name") && to_string($message."syslog_program_name") == "haproxy" )
+#   AND
+#   is_not_null($message."accept_date_string")
+#   AND
+#   is_string($message."accept_date_string")
+# then
+#   let output_1 = parse_date(to_string($message."accept_date_string"), "dd/MMM/yyyy:HH:mm:ss.SSS");
+#   set_field(
+#     field : "accept_date",
+#     value : output_1
+#   );
+# end
+
+# Rule: 4.3 HAProxy http_status_code_bucket
 # if
-# Message has field 'http_uri'
+# Field 'syslog_program_name' equals 'haproxy'
+# Check if value in 'http_status_code' is a not_null
+# Check if value in 'http_status_code' is a number
+# Field 'http_status_code' greater than or equal '100'
+# Field 'http_status_code' less than or equal '599'
+# then
+# Retrieve value for field 'http_status_code'
+# Convert '$output_1' to string
+# Get substring from '0' to '1' of '$output_2'
+# Concatenate '$output_3' and 'XX'
+# Set '$output_4' to field 'http_status_code_bucket'
+
+# Rule: 4.3 HAProxy http_uri
+# if
+# Field 'syslog_program_name' equals 'haproxy'
 # Check if value in 'http_uri' is a not_null
 # Check if value in 'http_uri' is a string
 # then

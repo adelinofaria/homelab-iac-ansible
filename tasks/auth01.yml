@@ -22,6 +22,7 @@
       ansible.builtin.apt:
         pkg:
           - authelia=4.38.*
+          - rsyslog
         update_cache: true
 
     - name: Copy configuration.yml file
@@ -71,4 +72,31 @@
       ansible.builtin.systemd_service:
         name: authelia
         enabled: true
+        state: restarted
+
+    - name: Copy 48-authelia.conf
+      ansible.builtin.copy:
+        src: files/authelia/48-authelia.conf
+        dest: /etc/rsyslog.d/48-authelia.conf
+        mode: 0644
+      register: copy_48_authelial_conf
+
+    - name: Restart rsyslog service
+      when: copy_48_authelial_conf.changed
+      ansible.builtin.systemd_service:
+        name: rsyslog
+        enabled: true
+        state: restarted
+
+    - name: Copy authelia
+      ansible.builtin.copy:
+        src: files/authelia/logrotate.d/authelia
+        dest: /etc/logrotate.d/authelia
+        mode: 0644
+      register: copy_logrotate_d_authelia
+
+    - name: Restart logrotate service
+      when: copy_logrotate_d_authelia.changed
+      ansible.builtin.systemd_service:
+        name: logrotate
         state: restarted
