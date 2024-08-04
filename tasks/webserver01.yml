@@ -10,6 +10,11 @@
       ansible.builtin.include_role:
         name: docker
 
+    - name: Install apt dependencies
+      ansible.builtin.apt:
+        name: rsyslog
+        cache_valid_time: 3600
+
     # File directory config
 
     - name: Create folders
@@ -137,3 +142,24 @@
         mode: '0664'
       notify:
         - Restart container
+
+    - name: Copy 46-swag-nginx-access.conf
+      ansible.builtin.copy:
+        src: files/swag/rsyslog.d/46-swag-nginx-access.conf
+        dest: /etc/rsyslog.d/46-swag-nginx-access.conf
+        mode: 0644
+      register: copy_46_swag_nginx_access_conf
+
+    - name: Copy 47-swag-nginx-error.conf
+      ansible.builtin.copy:
+        src: files/swag/rsyslog.d/47-swag-nginx-error.conf
+        dest: /etc/rsyslog.d/47-swag-nginx-error.conf
+        mode: 0644
+      register: copy_47_swag_nginx_error_conf
+
+    - name: Restart rsyslog service
+      when: copy_46_swag_nginx_access_conf.changed
+      ansible.builtin.systemd_service:
+        name: rsyslog
+        enabled: true
+        state: restarted

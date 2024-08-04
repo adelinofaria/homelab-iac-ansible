@@ -28,7 +28,7 @@
           - certbot
           - python3-certbot-dns-cloudflare
           - haproxy=3.0.*
-        update_cache: true
+        cache_valid_time: 3600
 
     # certbot configuration
 

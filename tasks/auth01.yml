@@ -23,7 +23,7 @@
         pkg:
           - authelia=4.38.*
           - rsyslog
-        update_cache: true
+        cache_valid_time: 3600
 
     - name: Copy configuration.yml file
       ansible.builtin.template:
@@ -76,7 +76,7 @@
 
     - name: Copy 48-authelia.conf
       ansible.builtin.copy:
-        src: files/authelia/48-authelia.conf
+        src: files/authelia/rsyslog.d/48-authelia.conf
         dest: /etc/rsyslog.d/48-authelia.conf
         mode: 0644
       register: copy_48_authelial_conf

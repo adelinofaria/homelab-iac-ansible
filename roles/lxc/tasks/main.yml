@@ -4,7 +4,7 @@
   ansible.builtin.apt:
     name:
       - prometheus-node-exporter
-    update_cache: true
+    cache_valid_time: 3600
 
 - name: Mask systemd-logind service due some internal errors is delaying ssh session login
   ansible.builtin.systemd_service:

@@ -146,6 +146,13 @@
 # then
 # Match grok on field 'message' - %{SYSLOGHOST:syslog_host} (?<syslog_program>%{PROG:syslog_program_name}(?:\\[%{POSINT:syslog_program_pid}\\])?): %{GREEDYDATA:syslog_message}
 
+# Rule: 1.2 Syslog file export base
+# if
+# Check if value in 'message' is a not_null
+# Check if value in 'message' is a string
+# then
+# Match grok on field 'message' - %{SYSLOGHOST:syslog_host} %{NOTSPACE:syslog_tag} %{GREEDYDATA:syslog_message}
+
 # Step 1
 # Rule: 2.1 HAProxy syslog_message
 # if
@@ -172,6 +179,13 @@
 #   set_fields(to_map(gl2_fragment_extractor_1722336381350), "authelia_");
 # end
 
+# Rule: 2.3 Common Log Format syslog_message
+# if
+# Field 'syslog_program_name' equals 'swag-nginx'
+# Check if value in 'syslog_message' is a not_null
+# Check if value in 'syslog_message' is a string
+# then
+# Match grok on field 'syslog_message' - %{IPORHOST:clf_client} %{HTTPDUSER:clf_identity} %{USER:clf_user} \\[%{HTTPDATE:clf_timestamp;date;dd/MMM/yyyy:HH:mm:ss Z}\\] \"(?:%{WORD:clf_http_method} %{NOTSPACE:clf_http_request}(?: HTTP/%{NUMBER:clf_http_version})?|%{DATA:clf_http_request_raw})\" %{NUMBER:clf_http_status_code} (?:%{NUMBER:clf_http_response_bytes}|-) %{QS:clf_referer} %{QS:clf_user_agent}
 
 # Step 2
 # Rule: 3.1 HAProxy http_request
@@ -237,3 +251,13 @@
 # Check if value in 'http_uri' is a string
 # then
 # Match grok on field 'http_uri' - (?:%{URIPROTO:http_uri_proto}://)?(?:%{USER:http_uri_user}(?::[^@]*)?@)?(?<http_uri_host>%{IPORHOST}(?::%{POSINT})?)?(?<http_uri_path_param>%{URIPATH:http_uri_path}(?:%{URIPARAM:http_uri_param})?)?
+
+# RSyslog Severity
+# 0	emerg	system is unusable
+# 1	alert	action must be taken immediately
+# 2	crit	critical conditions
+# 3	error	error conditions
+# 4	warning	warning conditions
+# 5	notice	normal but significant condition
+# 6	info	informational messages
+# 7	debug	debug-level messages
