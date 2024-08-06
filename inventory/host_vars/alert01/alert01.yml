@@ -6,7 +6,7 @@ vmid: 260
 cores: 1
 memory: 256
 swap: 256
-storage: local-lvm:4
+storage: local-lvm:16
 hwaddr: 02:00:00:00:00:12
 ip: 192.168.1.18/24
 gw: 192.168.1.1
