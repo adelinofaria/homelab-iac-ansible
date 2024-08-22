@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+[Interface]
+Address = 10.0.8.1/24
+ListenPort = 51820
+PrivateKey = {{ vault_wireguard_private_key }}
+PostUp = nft add table ip wireguard; nft add chain ip wireguard wireguard_chain {type nat hook postrouting priority srcnat\; policy accept\;}; nft add rule ip wireguard wireguard_chain counter packets 0 bytes 0 masquerade; nft add table ip6 wireguard; nft add chain ip6 wireguard wireguard_chain {type nat hook postrouting priority srcnat\; policy accept\;}; nft add rule ip6 wireguard wireguard_chain counter packets 0 bytes 0 masquerade
+PostDown = nft delete table ip wireguard; nft delete table ip6 wireguard
+
+[Peer]
+PublicKey = {{ vault_wireguard_client1_public_key }}
+PresharedKey = {{ vault_wireguard_client1_preshared_key }}
+AllowedIPs = 10.0.8.2/32
+
+[Peer]
+PublicKey = {{ vault_wireguard_client2_public_key }}
+PresharedKey = {{ vault_wireguard_client2_preshared_key }}
+AllowedIPs = 10.0.8.3/32
+
+# https://www.wireguardconfig.com

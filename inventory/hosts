@@ -8,6 +8,7 @@ unbound01 # -> updns01
 ddns01
 haproxy01
 auth01
+vpn01
 webserver01
 logs01
 dash01
@@ -34,6 +35,7 @@ ddns01
 unbound01
 haproxy01
 auth01
+vpn01
 webserver01
 logs01
 dash01

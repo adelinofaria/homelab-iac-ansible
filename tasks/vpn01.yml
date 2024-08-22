@@ -1,0 +1,45 @@
+---
+# file: tasks/vpn01.yml
+- name: Running vpn01.yml playbook
+  when: ansible_hostname == 'vpn01'
+  block:
+    - name: Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - wireguard
+        cache_valid_time: 3600
+
+    - name: Copy wg0.conf file
+      ansible.builtin.template:
+        src: templates/wireguard/server_wg0.conf.j2
+        dest: /etc/wireguard/wg0.conf
+        mode: 0600
+      register: _copy_wg0_conf
+
+    - name: Enable IPv4 forwarding on 99-sysctl.conf file
+      ansible.builtin.replace:
+        path: /etc/sysctl.d/99-sysctl.conf
+        regexp: '^#net.ipv4.ip_forward=1$'
+        replace: 'net.ipv4.ip_forward=1'
+
+    - name: Enable IPv6 forwarding on 99-sysctl.conf file
+      ansible.builtin.replace:
+        path: /etc/sysctl.d/99-sysctl.conf
+        regexp: '^#net.ipv6.conf.all.forwarding=1$'
+        replace: 'net.ipv6.conf.all.forwarding=1'
+
+    - name: start wireguard and enable on boot
+      ansible.builtin.systemd_service:
+        name: wg-quick@wg0
+        enabled: true
+        state: started
+
+    - name: reload wireguard config
+      when: _copy_wg0_conf.changed
+      ansible.builtin.shell: wg-quick down wg0; wg-quick up wg0
+      args:
+        executable: /bin/bash

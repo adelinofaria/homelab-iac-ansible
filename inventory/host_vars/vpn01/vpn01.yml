@@ -1,0 +1,21 @@
+---
+# file: inventory/host_vars/vpn01.yml
+ansible_host: 192.168.1.7
+node: pve01
+vmid: 150
+cores: 1
+memory: 256
+swap: 256
+storage: local-lvm:2
+hwaddr: 02:00:00:00:00:07
+ip: 192.168.1.7/24
+gw: 192.168.1.1
+ip6: fe80::7/11
+gw6: fe80::ff:fe00:2201
+features:
+description: WireGuard LXC - WireGuard® is an extremely simple yet fast and modern VPN that utilizes state-of-the-art cryptography. It aims to be faster, simpler, leaner, and more useful than IPsec, while avoiding the massive headache.
+ostemplate: local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst
+template_storage: local
+template_content_type: vztmpl
+template: debian-12-standard_12.2-1_amd64.tar.zst
+notes: n/a
