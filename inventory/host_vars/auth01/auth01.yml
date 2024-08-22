@@ -10,7 +10,7 @@ storage: local-lvm
 hwaddr: 02:00:00:00:00:06
 ip: 192.168.1.6/24
 gw: 192.168.1.1
-ip6: fe80::5/11
+ip6: fe80::6/11
 gw6: fe80::ff:fe00:2201
 features: nesting=1
 description: Authelia LXC - Authelia is an open-source authentication and authorization server and portal fulfilling the identity and access management (IAM) role of information security in providing multi-factor authentication and single sign-on (SSO) for your applications via a web portal.
