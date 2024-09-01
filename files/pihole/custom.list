@@ -12,3 +12,4 @@
 192.168.1.24 homeassistant01
 192.168.1.25 plex01
 192.168.1.26 jenkins01
+192.168.1.27 overseerr01

@@ -15,6 +15,7 @@ dash01
 alert01
 plex01
 jenkins01
+overseerr01
 
 [kvm]
 homeassistant01
@@ -42,3 +43,4 @@ dash01
 alert01
 plex01
 jenkins01
+overseerr01

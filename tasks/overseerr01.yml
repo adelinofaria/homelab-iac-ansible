@@ -1,0 +1,40 @@
+---
+# file: tasks/overseerr01.yml
+- name: Running overseerr01.yml playbook
+  when: ansible_hostname == 'overseerr01'
+  block:
+    - name: Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Add cgroup rule to enable apparmor
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/nodes/{{ hostvars[inventory_hostname].node }}/lxc/{{ hostvars[inventory_hostname].vmid }}.conf"
+        line: "{{ item }}"
+      loop:
+        - 'lxc.mount.entry: /sys/kernel/security sys/kernel/security none bind,optional 0 0'
+      delegate_to: "{{ hostvars[inventory_hostname].node }}"
+      notify: Reboot lxc
+
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - squashfuse
+          - fuse
+          - snapd
+        cache_valid_time: 3600
+
+    - name: Install required system packages through snapd
+      community.general.snap:
+        name:
+          - core
+          - snapd
+          - overseerr
+
+    # # Ansible module snap gives error on simple snap install, doing this manually
+    # - name: Install required system packages through snapd - using command
+    #   ansible.builtin.command: snap install overseerr
+    #   register: cmd_output
+    #   changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
+
+# https://forum.proxmox.com/threads/i2p-on-debian-containers-proxmox-aka-apparmor-is-broken-on-debian-lxc-container-for-both-privileged-and-unprivileged-fix-inside.146924/
