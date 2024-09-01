@@ -19,6 +19,9 @@
         repo: deb [arch=amd64 signed-by=/usr/share/keyrings/haproxy.debian.net.asc] http://haproxy.debian.net bookworm-backports-3.0 main
         state: present
 
+    # We fix haproxy to 3.0.2 due last version that points to lua5.4
+    # There's no lua-json dependency with lua5.4 of yet
+
     - name: Install required system packages
       ansible.builtin.apt:
         pkg:
@@ -27,7 +30,7 @@
           - rsyslog-gnutls
           - certbot
           - python3-certbot-dns-cloudflare
-          - haproxy=3.0.*
+          - haproxy=3.0.2-*
         cache_valid_time: 3600
 
     # certbot configuration
@@ -112,6 +115,23 @@
           environment:
             RENEWED_LINEAGE: /etc/letsencrypt/live/adelinofaria.me
             RENEWED_DOMAINS: adelinofaria.me *.adelinofaria.me
+
+
+    # Validate configuration
+
+    - name: Copy haproxy.cfg to /tmp for file validation
+      ansible.builtin.copy:
+        src: files/haproxy/haproxy.cfg
+        dest: /tmp/haproxy.cfg
+        mode: 0644
+      changed_when: false
+
+    - name: Validate haproxy.cfg before moving to position
+      ansible.builtin.command: haproxy -f /tmp/haproxy.cfg -c
+      register: cmd_output
+      changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
+
+    # Configure HAProxy
 
     - name: Copy haproxy.cfg
       ansible.builtin.copy:
