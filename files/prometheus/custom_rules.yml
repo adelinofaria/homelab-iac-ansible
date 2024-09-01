@@ -1,7 +1,21 @@
 groups:
-- name: nodes
+- name: 0-RealTimeEvaluation
+  interval: 10s
   rules:
-  - alert: HostDown5
+  - alert: 0-HostDown30s
+    expr: up == 0
+    for: 30s
+    labels:
+      severity: info
+    annotations:
+      summary: "Host {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 30 seconds."
+
+- name: 1-ShortTermEvaluation
+  interval: 1m
+  rules:
+  # Warn if instance is down for the last 5 minutes
+  - alert: 0-HostDown5m
     expr: up{job="node_exporter"} == 0
     for: 5m
     labels:
@@ -9,8 +23,48 @@ groups:
     annotations:
       summary: "Host {{ $labels.instance }} down"
       description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+  # Warn if host memory is less than 10% over last 5 minutes
+  - alert: 1-HostMemory10%
+    expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Host {{ $labels.instance }} memory"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} with less than 10% free memory for more than 5 minutes."
+  # Warn if host disk is less than 10% over last 5 minutes
+  - alert: 2-HostDisk10%
+    expr: node_filesystem_free_bytes{fstype!~"fuse.*|nfs.*"} / node_filesystem_size_bytes{fstype!~"fuse.*|nfs.*"} < 0.1
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Host {{ $labels.instance }} disk space"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} with less than 10% free disk space for more than 5 minutes."
+  # Warn if rate of growth over last 10 minutes means filesystem will fill in 3 hours
+  - alert: 3-DiskFillingIn3h
+    expr: |
+      predict_linear(node_filesystem_avail_bytes{fstype!~"fuse.*|nfs.*"}[10m], 10800) < 0
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      summary: 'Filesystem will be full in less than 3h at current 10m growth rate'
+  # Warn if rate of growth over last 10 minutes will hit disk limit, report time
+  - alert: 4-TimeForDiskFill
+    expr: |
+        node_filesystem_avail_bytes / (node_filesystem_avail_bytes -
+        (predict_linear(node_filesystem_avail_bytes{fstype!~"fuse.*|nfs.*"}[10m], 10800) < 0)) * 10800
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      summary: 'Filesystem will be full in {{ $value | humanizeDuration }} at current 10m growth rate'
 
-  - alert: HostDown10
+- name: 2-MediumTermEvaluation
+  interval: 10m
+  rules:
+  - alert: 0-HostDown10m
     expr: up{job="node_exporter"} == 0
     for: 10m
     labels:
@@ -18,78 +72,94 @@ groups:
     annotations:
       summary: "Host {{ $labels.instance }} down"
       description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 10 minutes."
-
-  - alert: HostMemory10
-    expr: node_memory_MemAvailable_bytes{job="node_exporter"} / node_memory_MemTotal_bytes{job="node_exporter"} < 0.1
-    for: 5m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Host {{ $labels.instance }} memory"
-      description: "{{ $labels.instance }} of job {{ $labels.job }} with less than 10% free memory for more than 5 minutes."
-
-  - alert: HostMemory20
-    expr: node_memory_MemAvailable_bytes{job="node_exporter"} / node_memory_MemTotal_bytes{job="node_exporter"} < 0.2
+  # Warn if host memory is less than 20% over last 30 minutes
+  - alert: 1-HostMemory20%
+    expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.2
     for: 30m
     labels:
       severity: warning
     annotations:
       summary: "Host {{ $labels.instance }} memory"
       description: "{{ $labels.instance }} of job {{ $labels.job }} with less than 20% free memory for more than 30 minutes."
-
-  - alert: HostMemory30
-    expr: node_memory_MemAvailable_bytes{job="node_exporter"} / node_memory_MemTotal_bytes{job="node_exporter"} < 0.3
-    for: 24h
-    labels:
-      severity: info
-    annotations:
-      summary: "Host {{ $labels.instance }} memory"
-      description: "{{ $labels.instance }} of job {{ $labels.job }} with less than 30% free memory for more than 24 hours."
-
-  - alert: HostDisk10
-    expr: node_filesystem_free_bytes{job="node_exporter"} / node_filesystem_size_bytes{job="node_exporter"} < 0.1
-    for: 5m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Host {{ $labels.instance }} disk space"
-      description: "{{ $labels.instance }} of job {{ $labels.job }} with less than 10% free disk space for more than 5 minutes."
-
-  - alert: HostDisk20
-    expr: node_filesystem_free_bytes{job="node_exporter"} / node_filesystem_size_bytes{job="node_exporter"} < 0.2
+  # Warn if host disk is less than 20% over last 30 minutes
+  - alert: 2-HostDisk20%
+    expr: node_filesystem_free_bytes{fstype!~"fuse.*|nfs.*"} / node_filesystem_size_bytes{fstype!~"fuse.*|nfs.*"} < 0.2
     for: 30m
     labels:
       severity: warning
     annotations:
       summary: "Host {{ $labels.instance }} disk space"
       description: "{{ $labels.instance }} of job {{ $labels.job }} with less than 20% free disk space for more than 30 minutes."
+  # Warn if rate of growth over last 3 hours means filesystem will fill in 3 days
+  - alert: 3-DiskFillingIn3d
+    expr: |
+      predict_linear(node_filesystem_avail_bytes{fstype!~"fuse.*|nfs.*"}[3h], 3*86400) < 0
+    for: 3h
+    labels:
+      severity: warning
+    annotations:
+      summary: 'Filesystem will be full in less than 2d at current 3h growth rate'
+  # Warn if rate of growth over last 3 hours will hit disk limit, report time
+  - alert: 4-TimeForDiskFill
+    expr: |
+        node_filesystem_avail_bytes / (node_filesystem_avail_bytes -
+        (predict_linear(node_filesystem_avail_bytes{fstype!~"fuse.*|nfs.*"}[3h], 3*86400) < 0)) * 3*86400
+    for: 3h
+    labels:
+      severity: warning
+    annotations:
+      summary: 'Filesystem will be full in {{ $value | humanizeDuration }} at current 3h growth rate'
 
-  - alert: HostDisk40
-    expr: node_filesystem_free_bytes{job="node_exporter"} / node_filesystem_size_bytes{job="node_exporter"} < 0.4
+- name: 3-LongTermEvaluation
+  interval: 12h
+  rules:
+  # Warn if host memory is less than 30% over last 24 hours
+  - alert: 0-HostMemory30%
+    expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.3
+    for: 24h
+    labels:
+      severity: info
+    annotations:
+      summary: "Host {{ $labels.instance }} memory"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} with less than 30% free memory for more than 24 hours."
+  # Warn if host disk is less than 40% over last 24 hours
+  - alert: 1-HostDisk40%
+    expr: node_filesystem_free_bytes{fstype!~"fuse.*|nfs.*"} / node_filesystem_size_bytes{fstype!~"fuse.*|nfs.*"} < 0.4
     for: 24h
     labels:
       severity: info
     annotations:
       summary: "Host {{ $labels.instance }} disk space"
       description: "{{ $labels.instance }} of job {{ $labels.job }} with less than 40% free disk space for more than 24 hours."
-
-  - alert: GrafanaDown5
-    expr: up{job="grafana"} == 0
-    for: 5m
+  # Warn if rate of growth over last 12 hours means filesystem will fill in 7 days
+  - alert: 2-DiskFillingIn7d
+    expr: |
+      predict_linear(node_filesystem_avail_bytes{fstype!~"fuse.*|nfs.*"}[12h], 7*86400) < 0
+    for: 12h
     labels:
-      severity: critical
+      severity: info
     annotations:
-      summary: "Grafana service {{ $labels.instance }} down"
-      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
-
-  - alert: GraylogDown5
-    expr: up{job="graylog"} == 0
-    for: 5m
+      summary: 'Filesystem will be full in less than 1w at current 12h growth rate'
+  # Warn if rate of growth over last 12 hours will hit disk limit, report time
+  - alert: 3-TimeForDiskFill
+    expr: |
+        node_filesystem_avail_bytes / (node_filesystem_avail_bytes -
+        (predict_linear(node_filesystem_avail_bytes{fstype!~"fuse.*|nfs.*"}[12h], 7*86400) < 0)) * 7*86400
+    for: 12h
     labels:
-      severity: critical
+      severity: info
     annotations:
-      summary: "Graylog service {{ $labels.instance }} down"
-      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+      summary: 'Filesystem will be full in {{ $value | humanizeDuration }} at current 12h growth rate'
+  # Warn if rate of growth over last 24 hours means filesystem will fill in 1 month
+  - alert: 4-DiskFillingIn30d
+    expr: |
+        node_filesystem_avail_bytes / (node_filesystem_avail_bytes -
+        (predict_linear(node_filesystem_avail_bytes{fstype!~"fuse.*|nfs.*"}[1d], 30*86400) < 0)) * 30*86400
+    for: 1d
+    labels:
+      severity: info
+    annotations:
+      summary: 'Filesystem will be full in {{ $value | humanizeDuration }} at current 24h growth rate'
 
   # Alert for any instance that has a median request latency >1s.
   # - alert: APIHighRequestLatency
