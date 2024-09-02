@@ -3,18 +3,18 @@
 - name: Running plex01.yml playbook
   when: ansible_hostname == 'plex01'
   block:
-    - name: Import role lxc
+    - name: Plex - Import role lxc
       ansible.builtin.include_role:
         name: lxc
 
-    - name: Install required system packages
+    - name: Plex - Install required system packages
       ansible.builtin.apt:
         pkg:
           - curl
           - gnupg
         update_cache: true
 
-    - name: Ples - Download gpg key
+    - name: Plex - Download gpg key
       ansible.builtin.apt_key:
         url: https://downloads.plex.tv/plex-keys/PlexSign.key
         state: present
@@ -24,7 +24,7 @@
         repo: deb https://downloads.plex.tv/repo/deb public main
         state: present
 
-    - name: Add cgroup rule
+    - name: Plex - Add cgroup rule
       ansible.builtin.lineinfile:
         path: "/etc/pve/nodes/{{ hostvars[inventory_hostname].node }}/lxc/{{ hostvars[inventory_hostname].vmid }}.conf"
         line: "{{ item }}"
@@ -35,14 +35,14 @@
       delegate_to: "{{ hostvars[inventory_hostname].node }}"
       notify: Reboot lxc
 
-    - name: Ensure /dev/dri/renderD128 have the right permissions
+    - name: Plex - Ensure /dev/dri/renderD128 have the right permissions
       ansible.builtin.file:
         path: /dev/dri/renderD128
         mode: 0666
       delegate_to: "{{ hostvars[inventory_hostname].node }}"
       notify: Reboot lxc
 
-    - name: Add tmpfs entry in /etc/fstab
+    - name: Plex - Add tmpfs entry in /etc/fstab
       ansible.builtin.blockinfile:
         path: "/etc/fstab"
         block: |
@@ -51,7 +51,7 @@
         marker: "# {mark} ANSIBLE MANAGED BLOCK"
       notify: Reboot lxc
 
-    - name: Update apt and install plexmediaserver
+    - name: Plex - Update apt and install plexmediaserver
       ansible.builtin.apt:
         name:
           - plexmediaserver
