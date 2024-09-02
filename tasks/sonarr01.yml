@@ -1,0 +1,82 @@
+---
+# file: tasks/sonarr01.yml
+- name: Running sonarr01.yml playbook
+  when: ansible_hostname == 'sonarr01'
+  block:
+    - name: Sonarr - Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Sonarr - Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - sqlite3
+        cache_valid_time: 3600
+
+    - name: Sonarr - Create /var/lib/sonarr
+      ansible.builtin.file:
+        path: /var/lib/sonarr
+        state: directory
+        mode: 0775
+
+    - name: Sonarr - Download package
+      ansible.builtin.get_url:
+        url: https://services.sonarr.tv/v1/download/main/latest?version=4&os=linux&arch=x64
+        dest: /tmp
+        mode: 0644
+      register: _sonarr_download_package
+
+    - name: Sonarr - Extract package
+      ansible.builtin.unarchive:
+        src: "{{ _sonarr_download_package.dest }}"
+        dest: /tmp
+        remote_src: true
+      register: _sonarr_extract_package
+
+    - name: Sonarr - Recursively remove directory /opt/sonarr
+      ansible.builtin.file:
+        path: /opt/sonarr
+        state: absent
+
+    # Only way to copy folder with rename
+    - name: Sonarr - Move package from /tmp to /opt
+      ansible.builtin.command: "mv /tmp/Sonarr /opt/sonarr"
+      register: cmd_output
+      changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
+
+    - name: Sonarr - Touch update_required file
+      ansible.builtin.file:
+        path: /var/lib/sonarr/update_required
+        state: touch
+        mode: 0775
+
+    - name: Sonarr - Update service file
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/sonarr.service
+        content: |
+          [Unit]
+          Description=Sonarr Daemon
+          After=syslog.target network.target
+          [Service]
+          User=0
+          Group=0
+          UMask=0002
+          Type=simple
+          ExecStart=/opt/sonarr/Sonarr -nobrowser -data=/var/lib/sonarr
+          TimeoutStopSec=20
+          KillMode=process
+          Restart=on-failure
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Sonarr - Restart service
+      ansible.builtin.systemd_service:
+        name: sonarr
+        enabled: true
+        state: restarted
+        daemon_reload: true
+
+    - name: Sonarr - Service is up
+      ansible.builtin.debug:
+        msg:
+          - "Browse to http://{{ ansible_host }}:8989 for the Sonarr GUI"
