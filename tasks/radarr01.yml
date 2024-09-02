@@ -32,7 +32,6 @@
         src: "{{ _radarr_download_package.dest }}"
         dest: /tmp
         remote_src: true
-      register: _radarr_extract_package
 
     - name: Radarr - Recursively remove directory /opt/Radarr
       ansible.builtin.file:
