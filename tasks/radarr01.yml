@@ -1,0 +1,91 @@
+---
+# file: tasks/radarr01.yml
+- name: Running radarr01.yml playbook
+  when: ansible_hostname == 'radarr01'
+  block:
+    - name: Radarr - Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Radarr - Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - curl
+          - sqlite3
+        cache_valid_time: 3600
+
+    - name: Radarr - Create /var/lib/radarr
+      ansible.builtin.file:
+        path: /var/lib/radarr
+        state: directory
+        mode: 0755
+
+    - name: Radarr - Download package
+      ansible.builtin.get_url:
+        url: http://radarr.servarr.com/v1/update/master/updatefile?os=linux&runtime=netcore&arch=x64
+        dest: /tmp
+        mode: 0755
+      register: _radarr_download_package
+
+    - name: Radarr - Extract package
+      ansible.builtin.unarchive:
+        src: "{{ _radarr_download_package.dest }}"
+        dest: /tmp
+        remote_src: true
+      register: _radarr_extract_package
+
+    - name: Radarr - Recursively remove directory /opt/Radarr
+      ansible.builtin.file:
+        path: /opt/Radarr
+        state: absent
+
+    - name: Radarr - Copy package from /tmp to /opt
+      ansible.builtin.copy:
+        src: /tmp/Radarr
+        dest: /opt
+        mode: 0755
+        remote_src: yes
+
+    - name: Radarr - Remove /tmp files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ _radarr_download_package.dest }}"
+        - /tmp/Radarr
+
+    - name: Radarr - Touch update_required flag file
+      ansible.builtin.file:
+        path: /var/lib/radarr/update_required
+        state: touch
+        mode: 0755
+
+    - name: Radarr - Update service file
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/radarr.service
+        content: |
+          [Unit]
+          Description=Radarr Daemon
+          After=syslog.target network.target
+          [Service]
+          User=0
+          Group=0
+          Type=simple
+          ExecStart=/opt/Radarr/Radarr -nobrowser -data=/var/lib/radarr
+          TimeoutStopSec=20
+          KillMode=process
+          Restart=on-failure
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Radarr - Restart service
+      ansible.builtin.systemd_service:
+        name: radarr
+        enabled: true
+        state: restarted
+        daemon_reload: true
+
+    - name: Radarr - Service is up
+      ansible.builtin.debug:
+        msg:
+          - "Browse to http://{{ ansible_host }}:7878 for the Radarr GUI"

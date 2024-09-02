@@ -16,6 +16,7 @@ alert01
 plex01
 jenkins01
 overseerr01
+radarr01
 sonarr01
 
 [kvm]
@@ -45,4 +46,5 @@ alert01
 plex01
 jenkins01
 overseerr01
+radarr01
 sonarr01

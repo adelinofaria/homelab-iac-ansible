@@ -1,0 +1,21 @@
+---
+# file: inventory/host_vars/radarr01.yml
+ansible_host: 192.168.1.28
+node: pve01
+vmid: 340
+cores: 1
+memory: 256
+swap: 256
+storage: local-lvm:4
+hwaddr: 02:00:00:00:00:1c
+ip: 192.168.1.28/24
+gw: 192.168.1.1
+ip6: fe80::1c/11
+gw6: fe80::ff:fe00:2201
+features:
+description: n/a
+ostemplate: local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst
+template_storage: local
+template_content_type: vztmpl
+template: debian-12-standard_12.2-1_amd64.tar.zst
+notes: n/a
