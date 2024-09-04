@@ -1,0 +1,55 @@
+---
+# file: tasks/transmission01.yml
+- name: Running transmission01.yml playbook
+  when: ansible_hostname == 'transmission01'
+  block:
+    - name: Transmission - Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Transmission - Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - transmission-daemon
+        cache_valid_time: 3600
+
+    - name: Transmission - Stop service before changing settings
+      ansible.builtin.systemd_service:
+        name: transmission-daemon
+        state: stopped
+
+    - name: Transmission - Update dht-enabled at settings.json
+      ansible.builtin.replace:
+        path: /etc/transmission-daemon/settings.json
+        regexp: '^(\s*"dht-enabled": )true(,)$'
+        replace: '\1false\2'
+
+    - name: Transmission - Update lpd-enabled at settings.json
+      ansible.builtin.replace:
+        path: /etc/transmission-daemon/settings.json
+        regexp: '^(\s*"lpd-enabled": )true(,)$'
+        replace: '\1false\2'
+
+    - name: Transmission - Update pex-enabled at settings.json
+      ansible.builtin.replace:
+        path: /etc/transmission-daemon/settings.json
+        regexp: '^(\s*"pex-enabled": )true(,)$'
+        replace: '\1false\2'
+
+    - name: Transmission - Update download-dir at settings.json
+      ansible.builtin.replace:
+        path: /etc/transmission-daemon/settings.json
+        regexp: '^(\s*"download-dir": ")/var/lib/transmission-daemon/downloads(",)$'
+        replace: '\1/mnt/data/torrents\2'
+
+    - name: Transmission - Update rpc-whitelist at settings.json
+      ansible.builtin.replace:
+        path: /etc/transmission-daemon/settings.json
+        regexp: '^(\s*"rpc-whitelist": "127.0.0.1)(",)$'
+        replace: '\1,::1,192.168.*.*\2'
+
+    - name: Transmission - Restart service
+      ansible.builtin.systemd_service:
+        name: transmission-daemon
+        enabled: true
+        state: restarted

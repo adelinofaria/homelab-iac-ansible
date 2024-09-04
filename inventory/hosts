@@ -19,6 +19,7 @@ overseerr01
 radarr01
 sonarr01
 prowlarr01
+transmission01
 
 [kvm]
 homeassistant01
@@ -50,3 +51,4 @@ overseerr01
 radarr01
 sonarr01
 prowlarr01
+transmission01
