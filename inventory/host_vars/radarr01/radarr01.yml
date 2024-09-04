@@ -4,11 +4,11 @@ ansible_host: 192.168.1.28
 node: pve01
 vmid: 340
 cores: 1
-memory: 256
-swap: 256
+memory: 512
+swap: 512
 storage: local-lvm:4
 mounts:
-  mp0: /mnt/plex-media/plex,mp=/mnt/plex
+  mp0: /mnt/plex-media,mp=/mnt/data
 mount_volumes: # on 9.2.0 - these fields are totally bugged, leaving this here for the time being til fix
   - id: mp0
     host_path: /mnt/plex-media/plex

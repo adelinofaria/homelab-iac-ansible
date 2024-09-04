@@ -8,7 +8,7 @@ memory: 4096
 swap: 4096
 storage: local-lvm
 mounts:
-  mp0: /mnt/plex-media/plex,mp=/mnt/plex
+  mp0: /mnt/plex-media,mp=/mnt/data
 mount_volumes: # on 9.2.0 - these fields are totally bugged, leaving this here for the time being til fix
   - id: mp0
     host_path: /mnt/plex-media/plex
