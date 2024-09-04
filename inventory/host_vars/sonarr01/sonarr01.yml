@@ -11,8 +11,8 @@ mounts:
   mp0: /mnt/plex-media,mp=/mnt/data
 mount_volumes: # on 9.2.0 - these fields are totally bugged, leaving this here for the time being til fix
   - id: mp0
-    host_path: /mnt/plex-media/plex
-    mountpoint: /mnt/plex
+    host_path: /mnt/plex-media
+    mountpoint: /mnt/data
 hwaddr: 02:00:00:00:00:1d
 ip: 192.168.1.29/24
 gw: 192.168.1.1
