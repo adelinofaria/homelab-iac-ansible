@@ -1,0 +1,36 @@
+---
+# file: tasks/nzbget01.yml
+- name: Running nzbget01.yml playbook
+  when: ansible_hostname == 'nzbget01'
+  block:
+    - name: NZBGet - Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: NZBGet - Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - nzbget
+        cache_valid_time: 3600
+
+    - name: NZBGet - Update DestDir at nzbget.conf
+      ansible.builtin.replace:
+        path: /etc/nzbget.conf
+        regexp: '^(DestDir=)\${MainDir}\/dst$'
+        replace: '\1/mnt/data/usenet/complete'
+
+    - name: NZBGet - Update InterDir at nzbget.conf
+      ansible.builtin.replace:
+        path: /etc/nzbget.conf
+        regexp: '^(InterDir=)\${MainDir}\/inter$'
+        replace: '\1/mnt/data/usenet/incomplete'
+
+    - name: NZBGet - Update listen address at nzbget.conf
+      ansible.builtin.replace:
+        path: /etc/nzbget.conf
+        regexp: '^(ControlIP=)127.0.0.1$'
+        replace: '\g<1>0.0.0.0'
+
+# https://www.reddit.com/r/usenet/wiki/faq/
+# https://www.reddit.com/r/usenet/wiki/indexers/
+# https://www.reddit.com/r/usenet/wiki/providers/

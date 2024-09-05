@@ -20,6 +20,7 @@ radarr01
 sonarr01
 prowlarr01
 transmission01
+nzbget01
 
 [kvm]
 homeassistant01
@@ -52,3 +53,4 @@ radarr01
 sonarr01
 prowlarr01
 transmission01
+nzbget01
