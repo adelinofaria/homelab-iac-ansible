@@ -1,0 +1,111 @@
+---
+# file: tasks/bazarr01.yml
+- name: Running bazarr01.yml playbook
+  when: ansible_hostname == 'bazarr01'
+  block:
+    - name: Bazarr - Import role lxc
+      ansible.builtin.include_role:
+        name: lxc
+
+    - name: Bazarr - Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - 7zip
+          - python3-dev
+          - python3-pip
+          - python3-setuptools
+          - unrar-free
+          - unzip
+        cache_valid_time: 3600
+
+    - name: Bazarr - Download package
+      ansible.builtin.get_url:
+        url: https://github.com/morpheus65535/bazarr/releases/latest/download/bazarr.zip
+        dest: /tmp
+        mode: 0755
+      register: _bazarr_download_package
+
+    - name: Bazarr - Recursively remove directory /opt/bazarr
+      ansible.builtin.file:
+        path: /opt/bazarr
+        state: absent
+
+    - name: Bazarr - Create /opt/bazarr
+      ansible.builtin.file:
+        path: /opt/bazarr
+        state: directory
+        mode: 0755
+
+    - name: Bazarr - Extract package
+      ansible.builtin.unarchive:
+        src: "{{ _bazarr_download_package.dest }}"
+        dest: /opt/bazarr
+        remote_src: true
+
+    - name: Bazarr - Remove downloaded file
+      ansible.builtin.file:
+        path: "{{ _bazarr_download_package.dest }}"
+        state: absent
+
+    - name: Bazarr - Disable EXTERNALLY-MANAGED flag
+      ansible.builtin.command:
+        cmd: find /usr/lib/ -type f -name EXTERNALLY-MANAGED -execdir mv {} EXTERNALLY-MANAGED.bkp \;
+        removes: /usr/lib/python*/EXTERNALLY-MANAGED
+
+    - name: Bazarr - Install the Python requirements
+      ansible.builtin.command:
+        chdir: /opt/bazarr
+        cmd: python3 -m pip install -r requirements.txt
+      register: cmd_output
+      changed_when: cmd_output.rc != 0 # <- Uses the return code to define when the task has changed.
+
+    - name: Bazarr - Update service file
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/bazarr.service
+        content: |
+          [Unit]
+          Description=Bazarr Daemon
+          After=syslog.target network.target
+          [Service]
+          WorkingDirectory=/opt/bazarr/
+          User=0
+          Group=0
+          UMask=0002
+          Type=simple
+          ExecStart=/usr/bin/python3 /opt/bazarr/bazarr.py
+          KillSignal=SIGINT
+          TimeoutStopSec=20
+          SyslogIdentifier=bazarr
+          ExecStartPre=/bin/sleep 30
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Bazarr - Restart service
+      ansible.builtin.systemd_service:
+        name: bazarr
+        enabled: true
+        state: restarted
+        daemon_reload: true
+
+    - name: Bazarr - Service is up
+      ansible.builtin.debug:
+        msg:
+          - "Browse to http://{{ ansible_host }}:6767 for the Bazarr GUI"
+
+    # - name: Bazarr - Update DestDir at nzbget.conf
+    #   ansible.builtin.replace:
+    #     path: /etc/nzbget.conf
+    #     regexp: '^(DestDir=)\${MainDir}\/dst$'
+    #     replace: '\1/mnt/data/usenet/complete'
+
+    # - name: Bazarr - Update InterDir at nzbget.conf
+    #   ansible.builtin.replace:
+    #     path: /etc/nzbget.conf
+    #     regexp: '^(InterDir=)\${MainDir}\/inter$'
+    #     replace: '\1/mnt/data/usenet/incomplete'
+
+    # - name: Bazarr - Update listen address at nzbget.conf
+    #   ansible.builtin.replace:
+    #     path: /etc/nzbget.conf
+    #     regexp: '^(ControlIP=)127.0.0.1$'
+    #     replace: '\g<1>0.0.0.0'
