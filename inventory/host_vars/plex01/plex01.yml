@@ -6,7 +6,7 @@ vmid: 310
 cores: 2
 memory: 4096
 swap: 4096
-storage: local-lvm
+storage: local-lvm:16
 mounts:
   mp0: /mnt/plex-media,mp=/mnt/data
 mount_volumes: # on 9.2.0 - these fields are totally bugged, leaving this here for the time being til fix
