@@ -140,6 +140,7 @@
 
 # Step 0
 # Rule: 1.1 Syslog base
+# Description: Outputs: syslog_host, syslog_program, syslog_message
 # if
 # Check if value in 'message' is a not_null
 # Check if value in 'message' is a string
@@ -147,6 +148,7 @@
 # Match grok on field 'message' - %{SYSLOGHOST:syslog_host} (?<syslog_program>%{PROG:syslog_program_name}(?:\\[%{POSINT:syslog_program_pid}\\])?): %{GREEDYDATA:syslog_message}
 
 # Rule: 1.2 Syslog file export base
+# Description: Outputs: syslog_host, syslog_tag, syslog_message
 # if
 # Check if value in 'message' is a not_null
 # Check if value in 'message' is a string
@@ -155,6 +157,7 @@
 
 # Step 1
 # Rule: 2.1 HAProxy syslog_message
+# Description: Outputs: accept_date_string, client_ip, http_request
 # if
 # Field 'syslog_program_name' equals 'haproxy'
 # Check if value in 'syslog_message' is a not_null
@@ -167,6 +170,7 @@
 # Match grok on field 'syslog_message' - %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE} %{NOTSPACE}( \\{%{DATA:captured_request_headers}\\})?( \\{%{DATA:captured_response_headers}\\})? \"%{DATA:http_request}\"
 
 # Code rule
+# Description: Outputs: json fields with prefix "authelia_"
 # rule "2.2 Authelia syslog_message"
 # when
 #   ( has_field("syslog_program_name") && to_string($message."syslog_program_name") == "authelia" )
@@ -180,6 +184,7 @@
 # end
 
 # Rule: 2.3 Common Log Format syslog_message
+# Description: Output: grok fields with "clf_" prefix
 # if
 # Field 'syslog_program_name' equals 'swag-nginx'
 # Check if value in 'syslog_message' is a not_null
@@ -189,6 +194,7 @@
 
 # Step 2
 # Rule: 3.1 HAProxy http_request
+# Description: Outputs: http_method, http_uri, http_version
 # if
 # Field 'syslog_program_name' equals 'haproxy'
 # Check if value in 'http_request' is a not_null
@@ -196,9 +202,27 @@
 # then
 # Match grok on field 'http_request' - %{WORD:http_method} %{NOTSPACE:http_uri} HTTP/%{NUMBER:http_version}
 
+# Rule: 3.2 HAProxy captured_request_headers
+# Description: Outputs: accept, accept_encoding, accept_language, connection, content_encoding, content_language, content_length, content_type, host, user_agent
+# if
+# Field 'syslog_program_name' equals 'haproxy'
+# Check if value in 'captured_request_headers' is a not_null
+# Check if value in 'captured_request_headers' is a string
+# then
+# Match grok on field 'captured_request_headers' - (?<accept>[^|]*)[|](?<accept_encoding>[^|]*)[|](?<accept_language>[^|]*)[|](?<connection>[^|]*)[|](?<content_encoding>[^|]*)[|](?<content_language>[^|]*)[|](?<content_length>[^|]*)[|](?<content_type>[^|]*)[|](?<host>[^|]*)[|](?<user_agent>[^|]*)
+
+# Rule: 3.3 HAProxy captured_response_headers
+# Description: Outputs: cache_control, content_encoding, content_language, content_length, content_type, date, expires, location, server
+# if
+# Field 'syslog_program_name' equals 'haproxy'
+# Check if value in 'captured_response_headers' is a not_null
+# Check if value in 'captured_response_headers' is a string
+# then
+# Match grok on field 'captured_response_headers' - (?<cache_control>[^|]*)[|](?<content_encoding>[^|]*)[|](?<content_language>[^|]*)[|](?<content_length>[^|]*)[|](?<content_type>[^|]*)[|](?<date>[^|]*)[|](?<expires>[^|]*)[|](?<location>[^|]*)[|](?<server>[^|]*)
 
 # Step 3
 # Code rule
+# Description: Outputs: client_ip (rewrite as IP), client_ip_anon
 # rule "4.1 HAProxy client_ip"
 # when
 #   ( has_field("syslog_program_name") && to_string($message."syslog_program_name") == "haproxy" )
@@ -215,6 +239,7 @@
 # end
 
 # Code rule
+# Description: Outputs: accept_date as Date
 # rule "4.2 HAProxy accept_date_string"
 # when
 #   ( has_field("syslog_program_name") && to_string($message."syslog_program_name") == "haproxy" )
@@ -231,6 +256,7 @@
 # end
 
 # Rule: 4.3 HAProxy http_status_code_bucket
+# Description: Outputs: http_status_code_bucket
 # if
 # Field 'syslog_program_name' equals 'haproxy'
 # Check if value in 'http_status_code' is a not_null
@@ -245,6 +271,7 @@
 # Set '$output_4' to field 'http_status_code_bucket'
 
 # Rule: 4.3 HAProxy http_uri
+# Description: Outputs: http_uri_proto, http_uri_user, http_uri_host, http_uri_path_param, http_uri_path, http_uri_param
 # if
 # Field 'syslog_program_name' equals 'haproxy'
 # Check if value in 'http_uri' is a not_null
